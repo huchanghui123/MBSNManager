@@ -9,5 +9,5 @@
 
 // 添加要在此处预编译的标头
 #include "framework.h"
-
+#import "C:\Program Files\Common Files\System\ado\msado15.dll" no_namespace rename("EOF","adoEOF")
 #endif //PCH_H
