@@ -7,6 +7,8 @@
 #include "MBSNManager.h"
 #include "MBSNManagerDlg.h"
 #include "afxdialogex.h"
+#include "CreateData.h"
+#include "ADOTools.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,6 +33,8 @@ public:
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnAbout();
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -65,6 +69,13 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_MESSAGE_VOID(WM_CLOSE, MyClose)
+	ON_COMMAND(ID_ABOUT, CAboutDlg::OnAbout)
+	ON_COMMAND(ID_OPEN, &CMBSNManagerDlg::OpenAccessData)
+	ON_COMMAND(ID_CLOSE, &CMBSNManagerDlg::CloseAccessData)
+	ON_COMMAND(ID_NEW, &CMBSNManagerDlg::CreateAccessData)
+	ON_MESSAGE(WM_ONINIT_ACCESS, OnInitAccessChange)
+
 END_MESSAGE_MAP()
 
 
@@ -100,6 +111,8 @@ BOOL CMBSNManagerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	m_Menu.LoadMenu(IDR_MENU1);
+	SetMenu(&m_Menu);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -153,3 +166,60 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+CString accessPath;
+CString accessName;
+
+void CMBSNManagerDlg::OnInitDataBase()
+{
+	AfxMessageBox(accessPath + _T(" ") + accessName);
+}
+
+LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
+{
+	OnInitDataBase();
+	return 0;
+}
+
+void CMBSNManagerDlg::OpenAccessData()
+{
+	OnInitDataBase();
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+	SetCurrentDirectory(filePath);
+
+	// 设置过滤器   
+	TCHAR szFilter[] = _T("数据库(*.accdb)|*.accdb");
+	// 构造打开文件对话框   
+	CFileDialog fileDlg(TRUE, _T("accdb"), NULL, 0, szFilter, this);
+
+	// 显示打开文件对话框   
+	if (IDOK == fileDlg.DoModal())
+	{
+		accessPath = fileDlg.GetPathName();
+		accessName = fileDlg.GetFileName()+_T(".")+fileDlg.GetFileExt();
+	}
+
+}
+
+void CMBSNManagerDlg::CloseAccessData()
+{
+
+}
+
+void CMBSNManagerDlg::CreateAccessData()
+{
+	CreateData cData;
+	cData.DoModal();
+}
+
+void CAboutDlg::OnAbout()
+{
+	CAboutDlg dlgAbout;
+	dlgAbout.DoModal();
+}
+
+void CMBSNManagerDlg::MyClose()
+{
+	
+	this->OnClose();
+}

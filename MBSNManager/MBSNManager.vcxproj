@@ -92,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -187,7 +187,10 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ADOTools.h" />
+    <ClInclude Include="CreateData.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="manager.h" />
     <ClInclude Include="MBSNManager.h" />
     <ClInclude Include="MBSNManagerDlg.h" />
     <ClInclude Include="pch.h" />
@@ -195,6 +198,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ADOTools.cpp" />
+    <ClCompile Include="CreateData.cpp" />
     <ClCompile Include="MBSNManager.cpp" />
     <ClCompile Include="MBSNManagerDlg.cpp" />
     <ClCompile Include="pch.cpp">

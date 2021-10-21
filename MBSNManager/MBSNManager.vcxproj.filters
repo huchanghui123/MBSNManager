@@ -33,6 +33,15 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CreateData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ADOTools.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="manager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MBSNManager.cpp">
@@ -42,6 +51,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ADOTools.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
