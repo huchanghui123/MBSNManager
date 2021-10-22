@@ -46,7 +46,7 @@ void CreateData::OnBnClickedButton1()
 	}
 
 	ADOTools ado;
-	BOOL ret = ado.CreateAccessData(fileName);
+	BOOL ret = ado.CreateADOData(fileName);
 	if (ret)
 	{
 		AfxMessageBox(_T("数据库创建成功!"));

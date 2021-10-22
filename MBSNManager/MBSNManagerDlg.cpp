@@ -63,6 +63,7 @@ CMBSNManagerDlg::CMBSNManagerDlg(CWnd* pParent /*=nullptr*/)
 void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST1, mList);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -113,6 +114,9 @@ BOOL CMBSNManagerDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	m_Menu.LoadMenu(IDR_MENU1);
 	SetMenu(&m_Menu);
+
+	OnInitDBList();
+	OnInitDataBase();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -166,23 +170,55 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CMBSNManagerDlg::OnInitDBList()
+{
+	mList.InsertColumn(0, _T("ID"), LVCFMT_LEFT);
+	mList.SetColumnWidth(0, 50);
+	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 50);
+	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 50);
+}
+
 CString accessPath;
 CString accessName;
+ADOTools ado;
 
 void CMBSNManagerDlg::OnInitDataBase()
 {
-	AfxMessageBox(accessPath + _T(" ") + accessName);
+	//AfxMessageBox(accessPath + _T(" ") + accessName);
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+
+	CString fileName;
+	fileName.Format(_T("%s"), filePath);
+	fileName = fileName + _T("\\test.accdb");
+
+	if (!PathFileExists(fileName))
+	{
+		AfxMessageBox(_T("数据库不存在!"));
+		return;
+	}
+
+	BOOL cret = ado.OnConnADODB();
+	if (cret)
+	{
+
+	}
+	
+
 }
 
 LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
 {
-	OnInitDataBase();
+	//OnInitDataBase();
 	return 0;
 }
 
 void CMBSNManagerDlg::OpenAccessData()
 {
-	OnInitDataBase();
 	TCHAR filePath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, filePath);
 	SetCurrentDirectory(filePath);

@@ -37,10 +37,12 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 
+	void OnInitDBList();
 	void OnInitDataBase();
 	afx_msg  LRESULT  OnInitAccessChange(WPARAM wParam, LPARAM lParam);
 
 public:
 	
 
+	CListCtrl mList;
 };
