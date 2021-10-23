@@ -1,8 +1,10 @@
 #pragma once
 
+
+using std::vector;
+
 typedef struct tagSNDATA {
-	int sid;
-	CString noStr, dateStr, modelStr, snStr, clientStr, saleStr;
+	_variant_t sid, order, ordate, model, sn, client, sale;
 }SNDATA, *LPSNDATA;
 
 extern CString accessName;

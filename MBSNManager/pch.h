@@ -9,6 +9,7 @@
 
 // 添加要在此处预编译的标头
 #include "framework.h"
+#include <vector>
 #include <afxcontrolbars.h>
 #import "C:\Program Files\Common Files\System\ado\msado15.dll" no_namespace rename("EOF","adoEOF")
 #import "C:\Program Files\Common Files\system\ado\msadox.dll" rename_namespace("ADOX")

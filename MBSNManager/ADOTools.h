@@ -13,11 +13,11 @@ public:
 	//记录集对象智能指针，它对记录集提供了控制功能
 	_RecordsetPtr m_pRecordset;
 
-	//vector<SNDATA> snDataVector;
+	vector<SNDATA> dbVector;
 
 	BOOL CreateADOData(CString);
 	BOOL OnConnADODB();
-	void GetADODBForSql(LPCTSTR);
+	vector<SNDATA> GetADODBForSql(LPCTSTR);
 
 
 	void ExitADOConn(void);

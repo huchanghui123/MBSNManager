@@ -6,7 +6,6 @@
 #include "CreateData.h"
 #include "afxdialogex.h"
 #include "ADOTools.h"
-#include "manager.h"
 
 // CreateData 对话框
 

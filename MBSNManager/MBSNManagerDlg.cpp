@@ -10,6 +10,7 @@
 #include "CreateData.h"
 #include "ADOTools.h"
 
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -175,9 +176,9 @@ void CMBSNManagerDlg::OnInitDBList()
 	mList.InsertColumn(0, _T("ID"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
 	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 100);
-	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 100);
-	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 100);
-	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 80);
+	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 80);
+	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 120);
 	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 50);
 	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 50);
 }
@@ -205,10 +206,29 @@ void CMBSNManagerDlg::OnInitDataBase()
 	BOOL cret = ado.OnConnADODB();
 	if (cret)
 	{
+		LPCTSTR lpSql = _T("SELECT * FROM SNTable");
+		vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
+		/*for (int i=0;i< vecdata.size();i++)
+		{
 
+		}*/
+		mList.DeleteAllItems();
+		int nItem = 0;
+		for each (SNDATA data in vecdata)
+		{
+			CString id;
+			id.Format(_T("%d"), data.sid.intVal);
+			mList.InsertItem(nItem, id);
+			mList.SetItemText(nItem, 1, (LPCTSTR)(_bstr_t)data.order);
+			mList.SetItemText(nItem, 2, (LPCTSTR)(_bstr_t)data.ordate);
+			mList.SetItemText(nItem, 3, (LPCTSTR)(_bstr_t)data.model);
+			mList.SetItemText(nItem, 4, (LPCTSTR)(_bstr_t)data.sn);
+			mList.SetItemText(nItem, 5, (LPCTSTR)(_bstr_t)data.client);
+			mList.SetItemText(nItem, 6, (LPCTSTR)(_bstr_t)data.sale);
+
+			nItem++;
+		}
 	}
-	
-
 }
 
 LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
@@ -256,6 +276,6 @@ void CAboutDlg::OnAbout()
 
 void CMBSNManagerDlg::MyClose()
 {
-	
+	ado.ExitADOConn();
 	this->OnClose();
 }

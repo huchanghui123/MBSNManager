@@ -97,45 +97,47 @@ BOOL ADOTools::OnConnADODB()
 }
 
 
-void ADOTools::GetADODBForSql(LPCTSTR lpSql)
+
+vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 {
-	//m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
-	//	adOpenDynamic, adLockOptimistic, adCmdText);
-	//if (m_pRecordset == NULL)
-	//{
-	//	AfxMessageBox(_T("读取数据记录发生错误"));
-	//	return snDataVector;
-	//}
-	//_variant_t id, no, date, model, sn, client, sale;
-	///*int sid;
-	//CString noStr, dateStr, modelStr, snStr, clientStr, saleStr;*/
-	//
-	//while (!m_pRecordset->adoEOF)
-	//{
-	//	id = m_pRecordset->GetCollect(_T("ID"));
-	//	no = m_pRecordset->GetCollect(_T("OrderNo"));
-	//	date = m_pRecordset->GetCollect(_T("OrderDate"));
-	//	model = m_pRecordset->GetCollect(_T("Model"));
-	//	sn = m_pRecordset->GetCollect(_T("SerialNo"));
-	//	client = m_pRecordset->GetCollect(_T("Clinet"));
-	//	sale = m_pRecordset->GetCollect(_T("Sale"));
-	//	
-	//	/*SNDATA data = {};
+	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+		adOpenDynamic, adLockOptimistic, adCmdText);
+	if (m_pRecordset == NULL)
+	{
+		AfxMessageBox(_T("读取数据记录发生错误"));
+		return dbVector;
+	}
+	_variant_t id, or, date, model, sn, client, sale;
+	/*int sid;
+	CString noStr, dateStr, modelStr, snStr, clientStr, saleStr;*/
+	
+	while (!m_pRecordset->adoEOF)
+	{
+		/*id = m_pRecordset->GetCollect(_T("ID"));
+		or = m_pRecordset->GetCollect(_T("OrderNo"));
+		date = m_pRecordset->GetCollect(_T("OrderDate"));
+		model = m_pRecordset->GetCollect(_T("Model"));
+		sn = m_pRecordset->GetCollect(_T("SerialNo"));
+		client = m_pRecordset->GetCollect(_T("Clinet"));
+		sale = m_pRecordset->GetCollect(_T("Sale"));*/
+		
+		SNDATA data = {};
 
-	//	data.sid = id.intVal;
-	//	data.noStr = (LPCTSTR)(_bstr_t)no;
-	//	data.dateStr = (LPCTSTR)(_bstr_t)date;
-	//	data.modelStr = (LPCTSTR)(_bstr_t)model;
-	//	data.snStr = (LPCTSTR)(_bstr_t)sn;
-	//	data.clientStr = (LPCTSTR)(_bstr_t)client;
-	//	data.saleStr = (LPCTSTR)(_bstr_t)sale;
-	//	snDataVector.push_back(data);*/
+		data.sid = m_pRecordset->GetCollect(_T("ID"));
+		data.order = m_pRecordset->GetCollect(_T("OrderNo"));
+		data.ordate = m_pRecordset->GetCollect(_T("OrderDate"));
+		data.model = m_pRecordset->GetCollect(_T("Model"));
+		data.sn = m_pRecordset->GetCollect(_T("SerialNo"));
+		data.client = m_pRecordset->GetCollect(_T("Clinet"));
+		data.sale = m_pRecordset->GetCollect(_T("Sale"));
 
-	//	m_pRecordset->MoveNext();
-	//}
-	//m_pRecordset->Close();
+		dbVector.push_back(data);
 
-	//return snDataVector;
+		m_pRecordset->MoveNext();
+	}
+	m_pRecordset->Close();
+
+	return dbVector;
 }
 
 
