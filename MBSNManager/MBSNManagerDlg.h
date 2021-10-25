@@ -39,10 +39,15 @@ protected:
 
 	void OnInitDBList();
 	void OnInitDataBase();
+	void RefListView();
 	afx_msg  LRESULT  OnInitAccessChange(WPARAM wParam, LPARAM lParam);
 
 public:
-	
-
 	CListCtrl mList;
+	int addNumEdit;
+	afx_msg void OnRef();
+	afx_msg void OnBnClickedFindBtn();
+	afx_msg void OnBnClickedAddBtn();
+	afx_msg void OnBnClickedDelBtn();
+	afx_msg void OnItemchangedList1(NMHDR*, LRESULT*);
 };

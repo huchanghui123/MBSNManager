@@ -57,7 +57,7 @@ BOOL ADOTools::CreateADOData(CString name)
 
 			m_pConnection->BeginTrans();
 			_variant_t RecordsAffected;
-			_bstr_t bstr1 = "CREATE TABLE SNT";
+			_bstr_t bstr1 = "CREATE TABLE SNTable";
 			_bstr_t bstr2 = "(OrderNo Text, Date Text, Model Text, SnNo Text, Client Text, Sale Text)";
 			_bstr_t CommandText = bstr1 + bstr2;
 			m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
@@ -72,7 +72,6 @@ BOOL ADOTools::CreateADOData(CString name)
 			return FALSE;
 		}
 	}
-
 	return TRUE;
 }
 
@@ -96,10 +95,9 @@ BOOL ADOTools::OnConnADODB()
 	return TRUE;
 }
 
-
-
 vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 {
+	vector<SNDATA> dbVector = {};
 	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
 		adOpenDynamic, adLockOptimistic, adCmdText);
 	if (m_pRecordset == NULL)
@@ -107,38 +105,53 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 		AfxMessageBox(_T("读取数据记录发生错误"));
 		return dbVector;
 	}
-	_variant_t id, or, date, model, sn, client, sale;
-	/*int sid;
-	CString noStr, dateStr, modelStr, snStr, clientStr, saleStr;*/
-	
+	m_pRecordset->MoveFirst();
 	while (!m_pRecordset->adoEOF)
-	{
-		/*id = m_pRecordset->GetCollect(_T("ID"));
-		or = m_pRecordset->GetCollect(_T("OrderNo"));
-		date = m_pRecordset->GetCollect(_T("OrderDate"));
-		model = m_pRecordset->GetCollect(_T("Model"));
-		sn = m_pRecordset->GetCollect(_T("SerialNo"));
-		client = m_pRecordset->GetCollect(_T("Clinet"));
-		sale = m_pRecordset->GetCollect(_T("Sale"));*/
-		
+	{	
 		SNDATA data = {};
-
-		data.sid = m_pRecordset->GetCollect(_T("ID"));
-		data.order = m_pRecordset->GetCollect(_T("OrderNo"));
-		data.ordate = m_pRecordset->GetCollect(_T("OrderDate"));
-		data.model = m_pRecordset->GetCollect(_T("Model"));
-		data.sn = m_pRecordset->GetCollect(_T("SerialNo"));
-		data.client = m_pRecordset->GetCollect(_T("Clinet"));
-		data.sale = m_pRecordset->GetCollect(_T("Sale"));
-
+		data.sid = m_pRecordset->GetCollect(_T("ID")).intVal;
+		data.order = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("OrderNo"));
+		data.ordate = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("OrderDate"));
+		data.model = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Model"));
+		data.sn = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("SerialNo"));
+		data.client = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Clinet"));
+		data.sale = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Sale"));
 		dbVector.push_back(data);
 
 		m_pRecordset->MoveNext();
 	}
-	m_pRecordset->Close();
+	
+	if (m_pRecordset->State == adStateOpen)
+	{
+		m_pRecordset->Close();
+	}
 
 	return dbVector;
 }
+
+BOOL ADOTools::OnAddADODB(SNDATA snd)
+{
+	_variant_t RecordsAffected;
+	TCHAR szSql[1024] = { 0 };
+	_stprintf(szSql, _T("INSERT INTO SNTable(OrderNo,OrderDate,Model,SerialNo,Clinet,Sale) VALUES('%s','%s','%s','%s','%s','%s')"),
+		(LPCTSTR)snd.order, (LPCTSTR)snd.ordate, (LPCTSTR)snd.model,
+		(LPCTSTR)snd.sn, (LPCTSTR)snd.client, (LPCTSTR)snd.sale);
+	try {
+		m_pConnection->BeginTrans();
+		m_pConnection->Execute((_bstr_t)szSql, &RecordsAffected, adCmdText);
+		m_pConnection->CommitTrans();
+		return TRUE;
+	}
+	catch (_com_error &e) {
+		AfxMessageBox((LPCTSTR)e.Description());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+
 
 
 void ADOTools::ExitADOConn()

@@ -57,6 +57,7 @@ END_MESSAGE_MAP()
 
 CMBSNManagerDlg::CMBSNManagerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MBSNMANAGER_DIALOG, pParent)
+	, addNumEdit(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -65,6 +66,10 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, mList);
+	DDX_Text(pDX, IDC_ADD_NUM, addNumEdit);
+	SetDlgItemText(IDC_ADD_NUM, _T("1"));
+
+	ListView_SetExtendedListViewStyle(mList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -78,6 +83,11 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_COMMAND(ID_NEW, &CMBSNManagerDlg::CreateAccessData)
 	ON_MESSAGE(WM_ONINIT_ACCESS, OnInitAccessChange)
 
+	ON_BN_CLICKED(IDC_FIND_BTN, &CMBSNManagerDlg::OnBnClickedFindBtn)
+	ON_BN_CLICKED(IDC_ADD_BTN, &CMBSNManagerDlg::OnBnClickedAddBtn)
+	ON_COMMAND(ID_REF, &CMBSNManagerDlg::OnRef)
+	ON_BN_CLICKED(IDC_DEL_BTN, &CMBSNManagerDlg::OnBnClickedDelBtn)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, OnItemchangedList1)
 END_MESSAGE_MAP()
 
 
@@ -206,28 +216,28 @@ void CMBSNManagerDlg::OnInitDataBase()
 	BOOL cret = ado.OnConnADODB();
 	if (cret)
 	{
+		GetDlgItem(IDC_FIND_BTN)->EnableWindow(TRUE);
+		GetDlgItem(IDC_ADD_BTN)->EnableWindow(TRUE);
+
 		LPCTSTR lpSql = _T("SELECT * FROM SNTable");
 		vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
-		/*for (int i=0;i< vecdata.size();i++)
-		{
-
-		}*/
 		mList.DeleteAllItems();
 		int nItem = 0;
 		for each (SNDATA data in vecdata)
 		{
 			CString id;
-			id.Format(_T("%d"), data.sid.intVal);
+			id.Format(_T("%d"), data.sid);
 			mList.InsertItem(nItem, id);
-			mList.SetItemText(nItem, 1, (LPCTSTR)(_bstr_t)data.order);
-			mList.SetItemText(nItem, 2, (LPCTSTR)(_bstr_t)data.ordate);
-			mList.SetItemText(nItem, 3, (LPCTSTR)(_bstr_t)data.model);
-			mList.SetItemText(nItem, 4, (LPCTSTR)(_bstr_t)data.sn);
-			mList.SetItemText(nItem, 5, (LPCTSTR)(_bstr_t)data.client);
-			mList.SetItemText(nItem, 6, (LPCTSTR)(_bstr_t)data.sale);
+			mList.SetItemText(nItem, 1, data.order);
+			mList.SetItemText(nItem, 2, data.ordate);
+			mList.SetItemText(nItem, 3, data.model);
+			mList.SetItemText(nItem, 4, data.sn);
+			mList.SetItemText(nItem, 5, data.client);
+			mList.SetItemText(nItem, 6, data.sale);
 
 			nItem++;
 		}
+		
 	}
 }
 
@@ -278,4 +288,114 @@ void CMBSNManagerDlg::MyClose()
 {
 	ado.ExitADOConn();
 	this->OnClose();
+}
+
+void CMBSNManagerDlg::OnBnClickedFindBtn()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CMBSNManagerDlg::OnBnClickedAddBtn()
+{
+	UpdateData(TRUE);
+	int num = addNumEdit;
+	CString order;
+	CString date;
+	CString model;
+	CString client;
+	CString sale;
+	CString sn;
+	CString sn1;
+	CString sn2;
+	CString temp;
+
+	GetDlgItemText(IDC_ADD_ORDER, order);
+	GetDlgItemText(IDC_ADD_DATE, date);
+	GetDlgItemText(IDC_ADD_MODEL, model);
+	GetDlgItemText(IDC_ADD_CLIENT, client);
+	GetDlgItemText(IDC_ADD_SALE, sale);
+	GetDlgItemText(IDC_ADD_SN1, sn1);
+	GetDlgItemText(IDC_ADD_SN2, sn2);
+
+
+	if (order.Trim().GetLength() == 0 || date.Trim().GetLength() == 0||
+		model.Trim().GetLength() == 0 || sn1.Trim().GetLength() == 0||
+		sn2.Trim().GetLength() == 0 || sale.Trim().GetLength() == 0 )
+	{
+		AfxMessageBox(_T("数据不能为空"));
+	}
+	int length = sn2.GetLength();
+	int snval = atoi((CT2A)sn2);
+	int addNo;
+	for (int i=0; i<num; i++)
+	{
+		addNo = snval + i;
+		temp.Format(_T("%0*d"), length, addNo);
+		sn = sn1 + temp;
+
+		SNDATA sd = {};
+		sd.order = order;
+		sd.ordate = date;
+		sd.model = model;
+		sd.client = client;
+		sd.sale = sale;
+		sd.sn = sn;
+
+		ado.OnAddADODB(sd);
+	}
+
+	RefListView();
+}
+
+
+void CMBSNManagerDlg::OnRef()
+{
+	RefListView();
+}
+
+
+void CMBSNManagerDlg::RefListView()
+{
+	LPCTSTR lpSql = _T("SELECT * FROM SNTable");
+	vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
+	mList.DeleteAllItems();
+	int nItem = 0;
+	for each (SNDATA data in vecdata)
+	{
+		CString id;
+		id.Format(_T("%d"), data.sid);
+		mList.InsertItem(nItem, id);
+		mList.SetItemText(nItem, 1, data.order);
+		mList.SetItemText(nItem, 2, data.ordate);
+		mList.SetItemText(nItem, 3, data.model);
+		mList.SetItemText(nItem, 4, data.sn);
+		mList.SetItemText(nItem, 5, data.client);
+		mList.SetItemText(nItem, 6, data.sale);
+
+		nItem++;
+	}
+}
+
+void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	POSITION pos = mList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+	{
+		//没有任何行选中
+	}
+	else
+	{
+		while (pos)
+		{
+			int nItem = mList.GetNextSelectedItem(pos);
+			CString snstr = mList.GetItemText(nItem, 4);
+			SetDlgItemText(IDC_DEL_SN, snstr);
+		}
+	}
+}
+
+void CMBSNManagerDlg::OnBnClickedDelBtn()
+{
+	// TODO: 在此添加控件通知处理程序代码
 }

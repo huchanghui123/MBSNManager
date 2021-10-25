@@ -4,7 +4,8 @@
 using std::vector;
 
 typedef struct tagSNDATA {
-	_variant_t sid, order, ordate, model, sn, client, sale;
+	int sid;
+	CString order, ordate, model, sn, client, sale;
 }SNDATA, *LPSNDATA;
 
 extern CString accessName;
