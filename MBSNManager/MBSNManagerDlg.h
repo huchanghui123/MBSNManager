@@ -52,4 +52,7 @@ public:
 	afx_msg void OnItemchangedList1(NMHDR*, LRESULT*);
 	CComboBox findCBox;
 	CComboBox delCBox;
+	CComboBox mfCBox;
+	afx_msg void OnBnClickedMfBtn();
+	afx_msg void OnCbnSelchangeMfCombo();
 };

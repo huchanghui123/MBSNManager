@@ -71,6 +71,7 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	ListView_SetExtendedListViewStyle(mList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	DDX_Control(pDX, IDC_COMBO1, findCBox);
 	DDX_Control(pDX, IDC_COMBO2, delCBox);
+	DDX_Control(pDX, IDC_MF_COMBO, mfCBox);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -89,6 +90,8 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_COMMAND(ID_REF, &CMBSNManagerDlg::OnRef)
 	ON_BN_CLICKED(IDC_DEL_BTN, &CMBSNManagerDlg::OnBnClickedDelBtn)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, OnItemchangedList1)
+	ON_BN_CLICKED(IDC_MF_BTN, &CMBSNManagerDlg::OnBnClickedMfBtn)
+	ON_CBN_SELCHANGE(IDC_MF_COMBO, &CMBSNManagerDlg::OnCbnSelchangeMfCombo)
 END_MESSAGE_MAP()
 
 
@@ -190,15 +193,18 @@ void CMBSNManagerDlg::OnInitDBList()
 	delCBox.InsertString(0, _T("订单号"));
 	delCBox.InsertString(1, _T("条码"));
 	delCBox.SetCurSel(1);
+	mfCBox.InsertString(0, _T("订单号"));
+	mfCBox.InsertString(1, _T("条码"));
+	mfCBox.SetCurSel(1);
 
 	mList.InsertColumn(0, _T("ID"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
-	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 120);
 	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 80);
 	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 80);
-	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 120);
-	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 50);
-	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 50);
+	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 130);
+	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 70);
+	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 60);
 }
 
 CString accessPath;
@@ -226,6 +232,8 @@ void CMBSNManagerDlg::OnInitDataBase()
 	{
 		GetDlgItem(IDC_FIND_BTN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_ADD_BTN)->EnableWindow(TRUE);
+		GetDlgItem(IDC_MF_BTN)->EnableWindow(TRUE);
+		GetDlgItem(IDC_DEL_BTN)->EnableWindow(TRUE);
 
 		LPCTSTR lpSql = _T("SELECT * FROM SNTable");
 		vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
@@ -378,6 +386,46 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	RefListView();
 }
 
+void CMBSNManagerDlg::OnBnClickedMfBtn()
+{
+	CString order;
+	CString date;
+	CString model;
+	CString client;
+	CString sale;
+	CString sn;
+	CString input;
+
+	GetDlgItemText(IDC_MF_ORDER, order);
+	GetDlgItemText(IDC_MF_DATE, date);
+	GetDlgItemText(IDC_MF_MODEL, model);
+	GetDlgItemText(IDC_MF_CLIENT, client);
+	GetDlgItemText(IDC_MF_SALE, sale);
+	GetDlgItemText(IDC_MF_SN, sn);
+	GetDlgItemText(IDC_MF_EDIT, input);
+
+	TCHAR szSql[1024] = { 0 };
+
+	if (mfCBox.GetCurSel() == 0)
+	{
+		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+		_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Clinet='%s',Sale='%s' WHERE OrderNo='%s'"),
+			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)input);
+	}
+	else
+	{
+		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
+		_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Clinet='%s',Sale='%s' WHERE SerialNo='%s'"),
+			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)input);
+	}
+
+	AfxMessageBox(szSql);
+}
+
 
 void CMBSNManagerDlg::OnRef()
 {
@@ -420,7 +468,7 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			int nItem = mList.GetNextSelectedItem(pos);
 			CString snstr = mList.GetItemText(nItem, 4);
-			SetDlgItemText(IDC_DEL_SN, snstr);
+			SetDlgItemText(IDC_DEL_EDIT, snstr);
 		}
 	}
 }
@@ -466,4 +514,20 @@ void CMBSNManagerDlg::MyClose()
 {
 	ado.ExitADOConn();
 	this->OnClose();
+}
+
+
+
+
+void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
+{
+	if (mfCBox.GetCurSel() == 0)
+		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+	else
+		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
+
+	
+
+
+
 }

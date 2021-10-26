@@ -165,15 +165,11 @@ BOOL ADOTools::OnDelADODB(LPCTSTR lpSql)
 	return TRUE;
 }
 
-
-
-
-
 void ADOTools::ExitADOConn()
 {
 	try
 	{
-		if (m_pConnection->State)
+		if (m_pConnection!=NULL && m_pConnection->State)
 		{
 			m_pConnection->Close();
 		}
