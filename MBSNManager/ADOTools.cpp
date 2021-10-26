@@ -105,7 +105,7 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 		AfxMessageBox(_T("读取数据记录发生错误"));
 		return dbVector;
 	}
-	m_pRecordset->MoveFirst();
+	
 	while (!m_pRecordset->adoEOF)
 	{	
 		SNDATA data = {};
@@ -140,9 +140,24 @@ BOOL ADOTools::OnAddADODB(SNDATA snd)
 		m_pConnection->BeginTrans();
 		m_pConnection->Execute((_bstr_t)szSql, &RecordsAffected, adCmdText);
 		m_pConnection->CommitTrans();
-		return TRUE;
 	}
 	catch (_com_error &e) {
+		AfxMessageBox((LPCTSTR)e.Description());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL ADOTools::OnDelADODB(LPCTSTR lpSql)
+{
+	_variant_t RecordsAffected;
+	try
+	{
+		m_pConnection->Execute((_bstr_t)lpSql, &RecordsAffected, adCmdText);
+	}
+	catch (_com_error &e)
+	{
 		AfxMessageBox((LPCTSTR)e.Description());
 		return FALSE;
 	}

@@ -17,7 +17,7 @@ public:
 	BOOL OnConnADODB();
 	vector<SNDATA> GetADODBForSql(LPCTSTR);
 	BOOL OnAddADODB(SNDATA);
-
+	BOOL OnDelADODB(LPCTSTR);
 
 	void ExitADOConn(void);
 };

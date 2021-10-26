@@ -57,7 +57,7 @@ END_MESSAGE_MAP()
 
 CMBSNManagerDlg::CMBSNManagerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MBSNMANAGER_DIALOG, pParent)
-	, addNumEdit(0)
+	, addNumEdit(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -67,9 +67,10 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, mList);
 	DDX_Text(pDX, IDC_ADD_NUM, addNumEdit);
-	SetDlgItemText(IDC_ADD_NUM, _T("1"));
 
 	ListView_SetExtendedListViewStyle(mList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	DDX_Control(pDX, IDC_COMBO1, findCBox);
+	DDX_Control(pDX, IDC_COMBO2, delCBox);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -183,6 +184,13 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 
 void CMBSNManagerDlg::OnInitDBList()
 {
+	findCBox.InsertString(0, _T("订单号"));
+	findCBox.InsertString(1, _T("条码"));
+	findCBox.SetCurSel(1);
+	delCBox.InsertString(0, _T("订单号"));
+	delCBox.InsertString(1, _T("条码"));
+	delCBox.SetCurSel(1);
+
 	mList.InsertColumn(0, _T("ID"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
 	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 100);
@@ -237,7 +245,6 @@ void CMBSNManagerDlg::OnInitDataBase()
 
 			nItem++;
 		}
-		
 	}
 }
 
@@ -272,27 +279,50 @@ void CMBSNManagerDlg::CloseAccessData()
 
 }
 
-void CMBSNManagerDlg::CreateAccessData()
-{
-	CreateData cData;
-	cData.DoModal();
-}
-
-void CAboutDlg::OnAbout()
-{
-	CAboutDlg dlgAbout;
-	dlgAbout.DoModal();
-}
-
-void CMBSNManagerDlg::MyClose()
-{
-	ado.ExitADOConn();
-	this->OnClose();
-}
 
 void CMBSNManagerDlg::OnBnClickedFindBtn()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	CString findStr;
+	TCHAR szSql[1024] = { 0 };
+
+	GetDlgItemText(IDC_FIND, findStr);
+	if (findStr.Trim().GetLength() == 0)
+	{
+		AfxMessageBox(_T("输入栏不能为空"));
+	}
+	if (findCBox.GetCurSel() == 0)
+	{
+		_stprintf(szSql, _T("SELECT * FROM SNTable WHERE OrderNo ='%s'"), (LPCTSTR)findStr);
+	}
+	else
+	{
+		_stprintf(szSql, _T("SELECT * FROM SNTable WHERE SerialNo ='%s'"), (LPCTSTR)findStr);
+	}
+
+	vector<SNDATA> vecdata = ado.GetADODBForSql(szSql);
+	if (vecdata.size() > 0)
+	{
+		mList.DeleteAllItems();
+		int nItem = 0;
+		for each (SNDATA data in vecdata)
+		{
+			CString id;
+			id.Format(_T("%d"), data.sid);
+			mList.InsertItem(nItem, id);
+			mList.SetItemText(nItem, 1, data.order);
+			mList.SetItemText(nItem, 2, data.ordate);
+			mList.SetItemText(nItem, 3, data.model);
+			mList.SetItemText(nItem, 4, data.sn);
+			mList.SetItemText(nItem, 5, data.client);
+			mList.SetItemText(nItem, 6, data.sale);
+
+			nItem++;
+		}
+	}
+	else
+	{
+		AfxMessageBox(_T("没有找到数据"));
+	}
 }
 
 
@@ -397,5 +427,43 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMBSNManagerDlg::OnBnClickedDelBtn()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	CString delStr;
+	TCHAR szSql[1024] = { 0 };
+
+	GetDlgItemText(IDC_DEL_EDIT, delStr);
+	if (delStr.Trim().GetLength() == 0)
+	{
+		AfxMessageBox(_T("输入栏不能为空"));
+	}
+	if (delCBox.GetCurSel() == 0)
+	{
+		_stprintf(szSql, _T("DELETE FROM SNTable WHERE OrderNo='%s'"), (LPCTSTR)delStr);
+	}
+	else
+	{
+		_stprintf(szSql, _T("DELETE FROM SNTable WHERE SerialNo='%s'"), (LPCTSTR)delStr);
+	}
+	BOOL ret = ado.OnDelADODB(szSql);
+	if (ret)
+	{
+		RefListView();
+	}
+}
+
+void CMBSNManagerDlg::CreateAccessData()
+{
+	CreateData cData;
+	cData.DoModal();
+}
+
+void CAboutDlg::OnAbout()
+{
+	CAboutDlg dlgAbout;
+	dlgAbout.DoModal();
+}
+
+void CMBSNManagerDlg::MyClose()
+{
+	ado.ExitADOConn();
+	this->OnClose();
 }

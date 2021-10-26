@@ -50,4 +50,6 @@ public:
 	afx_msg void OnBnClickedAddBtn();
 	afx_msg void OnBnClickedDelBtn();
 	afx_msg void OnItemchangedList1(NMHDR*, LRESULT*);
+	CComboBox findCBox;
+	CComboBox delCBox;
 };
