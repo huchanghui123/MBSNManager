@@ -4,6 +4,7 @@
 
 #pragma once
 #include "manager.h"
+#include "MyCEditEx.h"
 
 // CMBSNManagerDlg 对话框
 class CMBSNManagerDlg : public CDialogEx
@@ -55,4 +56,7 @@ public:
 	CComboBox mfCBox;
 	afx_msg void OnBnClickedMfBtn();
 	afx_msg void OnCbnSelchangeMfCombo();
+	int mfNum;
+	MyCEditEx addStartSN;
+	MyCEditEx mfStartSN;
 };

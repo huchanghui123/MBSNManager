@@ -42,6 +42,9 @@
     <ClInclude Include="manager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MyCEditEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MBSNManager.cpp">
@@ -57,6 +60,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ADOTools.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MyCEditEx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

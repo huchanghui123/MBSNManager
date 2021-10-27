@@ -58,6 +58,7 @@ END_MESSAGE_MAP()
 CMBSNManagerDlg::CMBSNManagerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MBSNMANAGER_DIALOG, pParent)
 	, addNumEdit(1)
+	, mfNum(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -72,6 +73,9 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO1, findCBox);
 	DDX_Control(pDX, IDC_COMBO2, delCBox);
 	DDX_Control(pDX, IDC_MF_COMBO, mfCBox);
+	DDX_Text(pDX, IDC_MF_NUM, mfNum);
+	DDX_Control(pDX, IDC_ADD_SN2, addStartSN);
+	DDX_Control(pDX, IDC_MF_SN2, mfStartSN);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -211,6 +215,36 @@ CString accessPath;
 CString accessName;
 ADOTools ado;
 
+LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
+{
+	//OnInitDataBase();
+	return 0;
+}
+
+void CMBSNManagerDlg::OpenAccessData()
+{
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+	SetCurrentDirectory(filePath);
+
+	// 设置过滤器   
+	TCHAR szFilter[] = _T("数据库(*.accdb)|*.accdb");
+	// 构造打开文件对话框   
+	CFileDialog fileDlg(TRUE, _T("accdb"), NULL, 0, szFilter, this);
+
+	// 显示打开文件对话框   
+	if (IDOK == fileDlg.DoModal())
+	{
+		accessPath = fileDlg.GetPathName();
+		accessName = fileDlg.GetFileName() + _T(".") + fileDlg.GetFileExt();
+	}
+}
+
+void CMBSNManagerDlg::CloseAccessData()
+{
+
+}
+
 void CMBSNManagerDlg::OnInitDataBase()
 {
 	//AfxMessageBox(accessPath + _T(" ") + accessName);
@@ -237,6 +271,11 @@ void CMBSNManagerDlg::OnInitDataBase()
 
 		LPCTSTR lpSql = _T("SELECT * FROM SNTable");
 		vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
+
+		CString total;
+		total.Format(_T("Total: %d"),vecdata.size());
+		GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
+
 		mList.DeleteAllItems();
 		int nItem = 0;
 		for each (SNDATA data in vecdata)
@@ -255,38 +294,6 @@ void CMBSNManagerDlg::OnInitDataBase()
 		}
 	}
 }
-
-LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
-{
-	//OnInitDataBase();
-	return 0;
-}
-
-void CMBSNManagerDlg::OpenAccessData()
-{
-	TCHAR filePath[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, filePath);
-	SetCurrentDirectory(filePath);
-
-	// 设置过滤器   
-	TCHAR szFilter[] = _T("数据库(*.accdb)|*.accdb");
-	// 构造打开文件对话框   
-	CFileDialog fileDlg(TRUE, _T("accdb"), NULL, 0, szFilter, this);
-
-	// 显示打开文件对话框   
-	if (IDOK == fileDlg.DoModal())
-	{
-		accessPath = fileDlg.GetPathName();
-		accessName = fileDlg.GetFileName()+_T(".")+fileDlg.GetFileExt();
-	}
-
-}
-
-void CMBSNManagerDlg::CloseAccessData()
-{
-
-}
-
 
 void CMBSNManagerDlg::OnBnClickedFindBtn()
 {
@@ -308,6 +315,10 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 	}
 
 	vector<SNDATA> vecdata = ado.GetADODBForSql(szSql);
+	CString total;
+	total.Format(_T("Total: %d"), vecdata.size());
+	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
+
 	if (vecdata.size() > 0)
 	{
 		mList.DeleteAllItems();
@@ -332,7 +343,6 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 		AfxMessageBox(_T("没有找到数据"));
 	}
 }
-
 
 void CMBSNManagerDlg::OnBnClickedAddBtn()
 {
@@ -388,12 +398,16 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 
 void CMBSNManagerDlg::OnBnClickedMfBtn()
 {
+	UpdateData(TRUE);
 	CString order;
 	CString date;
 	CString model;
 	CString client;
 	CString sale;
 	CString sn;
+	CString sn1;
+	CString sn2;
+	CString temp;
 	CString input;
 
 	GetDlgItemText(IDC_MF_ORDER, order);
@@ -401,29 +415,77 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	GetDlgItemText(IDC_MF_MODEL, model);
 	GetDlgItemText(IDC_MF_CLIENT, client);
 	GetDlgItemText(IDC_MF_SALE, sale);
-	GetDlgItemText(IDC_MF_SN, sn);
+	GetDlgItemText(IDC_MF_SN1, sn1);
+	GetDlgItemText(IDC_MF_SN2, sn2);
 	GetDlgItemText(IDC_MF_EDIT, input);
 
 	TCHAR szSql[1024] = { 0 };
 
 	if (mfCBox.GetCurSel() == 0)
 	{
-		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
-		_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Clinet='%s',Sale='%s' WHERE OrderNo='%s'"),
-			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)input);
+		if (sn1.Trim().GetLength()==0||sn2.Trim().GetLength()==0)
+		{
+			AfxMessageBox(_T("条码不能为空"));
+			return;
+		}
+		int num = mfNum;
+		//查询出订单号的所有条码
+		TCHAR snSql[1024] = { 0 };
+		_stprintf(snSql, _T("SELECT SerialNo FROM SNTable WHERE OrderNo ='%s'"), (LPCTSTR)input);
+		vector<CString> snVec = ado.GetADODBSNForSql(snSql);
+		int snsize = snVec.size();
+		if (snsize <= 0)
+		{
+			AfxMessageBox(_T("关键数据为空,无法修改"));
+			return;
+		}
+		
+		if (num > snsize)
+		{
+			num = snsize;
+		}
+		int length = sn2.GetLength();
+		int snval = atoi((CT2A)sn2);
+		int addNo;
+		CString whereSn;
+		for (int i = 0; i < num; i++)
+		{
+			addNo = snval + i;
+			temp.Format(_T("%0*d"), length, addNo);
+			sn = sn1 + temp;
+			whereSn = snVec[i];
+
+			_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+				(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)whereSn);
+
+			ado.OnExecuteADODB(szSql);
+		}
+		RefListView();
 	}
 	else
 	{
+		sn = sn1 + sn2;
+		if (sn.Trim().GetLength()==0)
+		{
+			sn = input;
+		}
 		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
 		_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Clinet='%s',Sale='%s' WHERE SerialNo='%s'"),
+						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
 			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)input);
+			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)input);
+		BOOL ret = ado.OnExecuteADODB(szSql);
+		if (ret)
+		{
+			RefListView();
+		}
 	}
 
-	AfxMessageBox(szSql);
+	
+	
+
 }
 
 
@@ -437,6 +499,10 @@ void CMBSNManagerDlg::RefListView()
 {
 	LPCTSTR lpSql = _T("SELECT * FROM SNTable");
 	vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
+	CString total;
+	total.Format(_T("Total: %d"), vecdata.size());
+	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
+
 	mList.DeleteAllItems();
 	int nItem = 0;
 	for each (SNDATA data in vecdata)
@@ -467,8 +533,28 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 		while (pos)
 		{
 			int nItem = mList.GetNextSelectedItem(pos);
+			CString orderstr = mList.GetItemText(nItem, 1);
+			CString datestr = mList.GetItemText(nItem, 2);
+			CString modelstr = mList.GetItemText(nItem, 3);
 			CString snstr = mList.GetItemText(nItem, 4);
-			SetDlgItemText(IDC_DEL_EDIT, snstr);
+			CString clientstr = mList.GetItemText(nItem, 5);
+			CString salestr = mList.GetItemText(nItem, 6);
+
+			SetDlgItemText(IDC_MF_ORDER, orderstr);
+			SetDlgItemText(IDC_MF_DATE, datestr);
+			SetDlgItemText(IDC_MF_MODEL, modelstr);
+			SetDlgItemText(IDC_MF_CLIENT, clientstr);
+			SetDlgItemText(IDC_MF_SALE, salestr);
+			
+			if (mfCBox.GetCurSel() == 0)
+				SetDlgItemText(IDC_MF_EDIT, orderstr);
+			else
+				SetDlgItemText(IDC_MF_EDIT, snstr);
+
+			if (delCBox.GetCurSel() == 0)
+				SetDlgItemText(IDC_DEL_EDIT, orderstr);
+			else
+				SetDlgItemText(IDC_DEL_EDIT, snstr);
 		}
 	}
 }
@@ -491,7 +577,7 @@ void CMBSNManagerDlg::OnBnClickedDelBtn()
 	{
 		_stprintf(szSql, _T("DELETE FROM SNTable WHERE SerialNo='%s'"), (LPCTSTR)delStr);
 	}
-	BOOL ret = ado.OnDelADODB(szSql);
+	BOOL ret = ado.OnExecuteADODB(szSql);
 	if (ret)
 	{
 		RefListView();
@@ -516,18 +602,14 @@ void CMBSNManagerDlg::MyClose()
 	this->OnClose();
 }
 
-
-
-
 void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 {
 	if (mfCBox.GetCurSel() == 0)
-		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+	{
+		//GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+	}
 	else
-		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
-
-	
-
-
-
+	{
+		//GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
+	}
 }

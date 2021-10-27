@@ -129,6 +129,29 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 	return dbVector;
 }
 
+vector<CString> ADOTools::GetADODBSNForSql(LPCTSTR lpSql)
+{
+	vector<CString> snVector = {};
+	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+		adOpenDynamic, adLockOptimistic, adCmdText);
+	if (m_pRecordset == NULL)
+	{
+		return snVector;
+	}
+	while (!m_pRecordset->adoEOF)
+	{
+		CString snStr = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("SerialNo"));
+		snVector.push_back(snStr);
+
+		m_pRecordset->MoveNext();
+	}
+	if (m_pRecordset->State == adStateOpen)
+	{
+		m_pRecordset->Close();
+	}
+	return snVector;
+}
+
 BOOL ADOTools::OnAddADODB(SNDATA snd)
 {
 	_variant_t RecordsAffected;
@@ -149,7 +172,7 @@ BOOL ADOTools::OnAddADODB(SNDATA snd)
 	return TRUE;
 }
 
-BOOL ADOTools::OnDelADODB(LPCTSTR lpSql)
+BOOL ADOTools::OnExecuteADODB(LPCTSTR lpSql)
 {
 	_variant_t RecordsAffected;
 	try

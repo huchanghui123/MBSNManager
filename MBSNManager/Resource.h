@@ -29,7 +29,6 @@
 #define IDC_COMBO2                      1017
 #define IDC_MF_EDIT                     1018
 #define IDC_MF_BTN                      1019
-#define IDC_COMBO3                      1020
 #define IDC_MF_COMBO                    1020
 #define IDC_MF_ORDER                    1021
 #define IDC_MF_DATE                     1022
@@ -37,6 +36,10 @@
 #define IDC_MF_CLIENT                   1024
 #define IDC_MF_SALE                     1025
 #define IDC_MF_SN                       1026
+#define IDC_MF_SN1                      1026
+#define IDC_DATA_TOTAL                  1027
+#define IDC_MF_SN2                      1028
+#define IDC_MF_NUM                      1029
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_ABOUT                        32773
@@ -53,7 +56,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
