@@ -100,10 +100,10 @@ BOOL CMBSNManagerApp::InitInstance()
 	ControlBarCleanUp();
 #endif
 
-	//if (!AfxOleInit())//这就是MFC初始化COM库 
-	//{
-	//	AfxMessageBox(_T("OLE初始化出错!"));
-	//}
+	if (!AfxOleInit())//这就是MFC初始化COM库 
+	{
+		AfxMessageBox(_T("OLE初始化出错!"));
+	}
 
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。

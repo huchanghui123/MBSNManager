@@ -43,7 +43,8 @@ void CreateData::OnBnClickedButton1()
 	{
 		return;
 	}
-
+	fileName = accessPath + _T("\\") + fileName + _T(".accdb");
+	//AfxMessageBox(fileName);
 	ADOTools ado;
 	BOOL ret = ado.CreateADOData(fileName);
 	if (ret)

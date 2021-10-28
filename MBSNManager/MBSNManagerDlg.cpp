@@ -201,7 +201,7 @@ void CMBSNManagerDlg::OnInitDBList()
 	mfCBox.InsertString(1, _T("条码"));
 	mfCBox.SetCurSel(1);
 
-	mList.InsertColumn(0, _T("ID"), LVCFMT_LEFT);
+	mList.InsertColumn(0, _T("NO"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
 	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 120);
 	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 80);
@@ -211,8 +211,10 @@ void CMBSNManagerDlg::OnInitDBList()
 	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 60);
 }
 
+CString accessFile;
 CString accessPath;
 CString accessName;
+CString tableName;
 ADOTools ado;
 
 LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
@@ -226,7 +228,7 @@ void CMBSNManagerDlg::OpenAccessData()
 	TCHAR filePath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, filePath);
 	SetCurrentDirectory(filePath);
-
+	
 	// 设置过滤器   
 	TCHAR szFilter[] = _T("数据库(*.accdb)|*.accdb");
 	// 构造打开文件对话框   
@@ -235,32 +237,62 @@ void CMBSNManagerDlg::OpenAccessData()
 	// 显示打开文件对话框   
 	if (IDOK == fileDlg.DoModal())
 	{
-		accessPath = fileDlg.GetPathName();
-		accessName = fileDlg.GetFileName() + _T(".") + fileDlg.GetFileExt();
+		accessFile = fileDlg.GetPathName();
+		accessPath = fileDlg.GetFolderPath();
+		accessName = fileDlg.GetFileName();
+
+		//AfxMessageBox(accessPath+_T("\r\n")+accessFile);
+		CloseAccessData();
+		OnConDBAndUpdateList();
 	}
 }
 
 void CMBSNManagerDlg::CloseAccessData()
 {
+	ado.ExitADOConn();
+	mList.DeleteAllItems();
+	tableName.Empty();
+}
 
+BOOL CMBSNManagerDlg::OnInitDataFile()
+{
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+	SetCurrentDirectory(filePath);
+	CString fileName;
+	fileName.Format(_T("%s"), filePath);
+	accessPath = fileName;
+	CFileFind finder;
+	BOOL isNotEmpty = finder.FindFile(fileName + _T("\\*.accdb"));
+	if (!isNotEmpty)
+	{
+		return FALSE;
+	}
+	else
+	{
+		finder.FindNextFile();
+		accessName = finder.GetFileName();
+		accessFile = fileName + _T("\\") + accessName;
+	}
+
+	//AfxMessageBox(accessPath+_T("\r\n")+accessFile);
+
+	return TRUE;
 }
 
 void CMBSNManagerDlg::OnInitDataBase()
 {
-	//AfxMessageBox(accessPath + _T(" ") + accessName);
-	TCHAR filePath[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, filePath);
-
-	CString fileName;
-	fileName.Format(_T("%s"), filePath);
-	fileName = fileName + _T("\\test.accdb");
-
-	if (!PathFileExists(fileName))
+	BOOL df = OnInitDataFile();
+	if (!df)
 	{
 		AfxMessageBox(_T("数据库不存在!"));
 		return;
 	}
+	OnConDBAndUpdateList();
+}
 
+void CMBSNManagerDlg::OnConDBAndUpdateList()
+{
 	BOOL cret = ado.OnConnADODB();
 	if (cret)
 	{
@@ -269,19 +301,21 @@ void CMBSNManagerDlg::OnInitDataBase()
 		GetDlgItem(IDC_MF_BTN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DEL_BTN)->EnableWindow(TRUE);
 
-		LPCTSTR lpSql = _T("SELECT * FROM SNTable");
-		vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
+		CString lpSql;
+		lpSql.Format(_T("SELECT * FROM %s"), tableName);
+		vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
 
-		CString total;
-		total.Format(_T("Total: %d"),vecdata.size());
-		GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
+		CString status;
+		status.Format(_T("Table: %s	Total: %d	DB: %s	"), tableName, vecdata.size(), accessFile);
+		GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(status);
 
 		mList.DeleteAllItems();
 		int nItem = 0;
 		for each (SNDATA data in vecdata)
 		{
 			CString id;
-			id.Format(_T("%d"), data.sid);
+			//id.Format(_T("%d"), data.sid);
+			id.Format(_T("%d"), nItem + 1);
 			mList.InsertItem(nItem, id);
 			mList.SetItemText(nItem, 1, data.order);
 			mList.SetItemText(nItem, 2, data.ordate);
@@ -307,11 +341,11 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 	}
 	if (findCBox.GetCurSel() == 0)
 	{
-		_stprintf(szSql, _T("SELECT * FROM SNTable WHERE OrderNo ='%s'"), (LPCTSTR)findStr);
+		_stprintf(szSql, _T("SELECT * FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)findStr);
 	}
 	else
 	{
-		_stprintf(szSql, _T("SELECT * FROM SNTable WHERE SerialNo ='%s'"), (LPCTSTR)findStr);
+		_stprintf(szSql, _T("SELECT * FROM %s WHERE SerialNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)findStr);
 	}
 
 	vector<SNDATA> vecdata = ado.GetADODBForSql(szSql);
@@ -326,7 +360,8 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 		for each (SNDATA data in vecdata)
 		{
 			CString id;
-			id.Format(_T("%d"), data.sid);
+			//id.Format(_T("%d"), data.sid);
+			id.Format(_T("%d"), nItem + 1);
 			mList.InsertItem(nItem, id);
 			mList.SetItemText(nItem, 1, data.order);
 			mList.SetItemText(nItem, 2, data.ordate);
@@ -382,15 +417,14 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 		temp.Format(_T("%0*d"), length, addNo);
 		sn = sn1 + temp;
 
-		SNDATA sd = {};
-		sd.order = order;
-		sd.ordate = date;
-		sd.model = model;
-		sd.client = client;
-		sd.sale = sale;
-		sd.sn = sn;
+		TCHAR szSql[1024] = { 0 };
+		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Clinet,Sale)\
+							 VALUES('%s','%s','%s','%s','%s','%s')"), 
+			(LPCTSTR)tableName,
+			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+			(LPCTSTR)sn, (LPCTSTR)client, (LPCTSTR)sale);
 
-		ado.OnAddADODB(sd);
+		ado.OnExecuteADODB(szSql);
 	}
 
 	RefListView();
@@ -431,7 +465,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		int num = mfNum;
 		//查询出订单号的所有条码
 		TCHAR snSql[1024] = { 0 };
-		_stprintf(snSql, _T("SELECT SerialNo FROM SNTable WHERE OrderNo ='%s'"), (LPCTSTR)input);
+		_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
 		vector<CString> snVec = ado.GetADODBSNForSql(snSql);
 		int snsize = snVec.size();
 		if (snsize <= 0)
@@ -455,9 +489,9 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			sn = sn1 + temp;
 			whereSn = snVec[i];
 
-			_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
+			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
 						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
-				(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
 				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)whereSn);
 
 			ado.OnExecuteADODB(szSql);
@@ -472,9 +506,9 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			sn = input;
 		}
 		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
-		_stprintf(szSql, _T("UPDATE SNTable SET OrderNo='%s',OrderDate='%s',Model='%s',\
+		_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
 						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
-			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+			(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
 			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)input);
 		BOOL ret = ado.OnExecuteADODB(szSql);
 		if (ret)
@@ -482,10 +516,6 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			RefListView();
 		}
 	}
-
-	
-	
-
 }
 
 
@@ -497,18 +527,22 @@ void CMBSNManagerDlg::OnRef()
 
 void CMBSNManagerDlg::RefListView()
 {
-	LPCTSTR lpSql = _T("SELECT * FROM SNTable");
-	vector<SNDATA> vecdata = ado.GetADODBForSql(lpSql);
-	CString total;
-	total.Format(_T("Total: %d"), vecdata.size());
-	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
+	CString lpSql;
+	lpSql.Format(_T("SELECT * FROM %s"), tableName);
+	
+	vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
+	
+	CString status;
+	status.Format(_T("Table: %s	Total: %d	DB: %s	"), tableName, vecdata.size(), accessFile);
+	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(status);
 
 	mList.DeleteAllItems();
 	int nItem = 0;
 	for each (SNDATA data in vecdata)
 	{
 		CString id;
-		id.Format(_T("%d"), data.sid);
+		//id.Format(_T("%d"), data.sid);
+		id.Format(_T("%d"), nItem+1);
 		mList.InsertItem(nItem, id);
 		mList.SetItemText(nItem, 1, data.order);
 		mList.SetItemText(nItem, 2, data.ordate);
@@ -571,11 +605,11 @@ void CMBSNManagerDlg::OnBnClickedDelBtn()
 	}
 	if (delCBox.GetCurSel() == 0)
 	{
-		_stprintf(szSql, _T("DELETE FROM SNTable WHERE OrderNo='%s'"), (LPCTSTR)delStr);
+		_stprintf(szSql, _T("DELETE FROM %s WHERE OrderNo='%s'"), (LPCTSTR)tableName, (LPCTSTR)delStr);
 	}
 	else
 	{
-		_stprintf(szSql, _T("DELETE FROM SNTable WHERE SerialNo='%s'"), (LPCTSTR)delStr);
+		_stprintf(szSql, _T("DELETE FROM %s WHERE SerialNo='%s'"), (LPCTSTR)tableName, (LPCTSTR)delStr);
 	}
 	BOOL ret = ado.OnExecuteADODB(szSql);
 	if (ret)
@@ -599,6 +633,7 @@ void CAboutDlg::OnAbout()
 void CMBSNManagerDlg::MyClose()
 {
 	ado.ExitADOConn();
+	
 	this->OnClose();
 }
 

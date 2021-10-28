@@ -20,6 +20,8 @@ public:
 	BOOL OnAddADODB(SNDATA);
 	BOOL OnExecuteADODB(LPCTSTR);
 
+	void GetDBTableNames();
+
 	void ExitADOConn(void);
 };
 

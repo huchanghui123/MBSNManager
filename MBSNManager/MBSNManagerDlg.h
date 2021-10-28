@@ -39,7 +39,9 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	void OnInitDBList();
+	BOOL OnInitDataFile();
 	void OnInitDataBase();
+	void OnConDBAndUpdateList();
 	void RefListView();
 	afx_msg  LRESULT  OnInitAccessChange(WPARAM wParam, LPARAM lParam);
 

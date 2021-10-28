@@ -8,7 +8,9 @@ typedef struct tagSNDATA {
 	CString order, ordate, model, sn, client, sale;
 }SNDATA, *LPSNDATA;
 
-extern CString accessName;
+extern CString accessFile;
 extern CString accessPath;
+extern CString accessName;
+extern CString tableName;
 
 #define WM_ONINIT_ACCESS WM_USER + 100

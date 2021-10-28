@@ -12,15 +12,14 @@ ADOTools::~ADOTools(void)
 }
 
 
-
-BOOL ADOTools::CreateADOData(CString name)
+BOOL ADOTools::CreateADOData(CString fileName)
 {
-	TCHAR filePath[MAX_PATH];
+	/*TCHAR filePath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, filePath);
 
 	CString fileName;
 	fileName.Format(_T("%s"),filePath);
-	fileName = fileName + _T("\\") + name+ _T(".accdb");
+	fileName = fileName + _T("\\") + name+ _T(".accdb");*/
 
 	if (PathFileExists(fileName))
 	{
@@ -31,7 +30,7 @@ BOOL ADOTools::CreateADOData(CString name)
 	{
 		ADOX::_CatalogPtr m_pCatalog = NULL;
 		_bstr_t ConnectString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source = " +
-			(_bstr_t)name + ".accdb;";
+			(_bstr_t)fileName;
 		ADOX::_TablePtr m_pTable = NULL;
 		try
 		{
@@ -63,8 +62,8 @@ BOOL ADOTools::CreateADOData(CString name)
 			m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
 			m_pConnection->CommitTrans();
 
-			accessPath = fileName;
-			accessName = name + _T(".accdb");
+			//accessPath = fileName;
+			//accessName = name + _T(".accdb");
 		}
 		catch (_com_error* e)
 		{
@@ -81,11 +80,17 @@ BOOL ADOTools::OnConnADODB()
 	{
 		CoInitialize(NULL);
 		m_pConnection = _ConnectionPtr(__uuidof(Connection));//创建连接对象
-		m_pConnection->ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=test.accdb;";
+		m_pConnection->ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source="+ (_bstr_t)accessFile;
 		m_pConnection->ConnectionTimeout = 20;
 		//adConnectUnsepecified(默认值，同步）和adAsyncConnect(异步）
 		m_pConnection->Open("", "", "", adConnectUnspecified);
 		m_pRecordset = _RecordsetPtr(__uuidof(Recordset));//创建记录集对象
+		GetDBTableNames();//初始化表名
+		if (tableName.GetLength()==0)
+		{
+			AfxMessageBox(_T("数据库没有创建表"));
+			return FALSE;
+		}
 	}
 	catch (_com_error* e)
 	{
@@ -98,11 +103,14 @@ BOOL ADOTools::OnConnADODB()
 vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 {
 	vector<SNDATA> dbVector = {};
-	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
-		adOpenDynamic, adLockOptimistic, adCmdText);
-	if (m_pRecordset == NULL)
+	if (m_pRecordset!=NULL)
 	{
-		AfxMessageBox(_T("读取数据记录发生错误"));
+		m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+			adOpenDynamic, adLockOptimistic, adCmdText);
+	}
+	else
+	{
+		AfxMessageBox(_T("数据库未连接"));
 		return dbVector;
 	}
 	
@@ -177,7 +185,9 @@ BOOL ADOTools::OnExecuteADODB(LPCTSTR lpSql)
 	_variant_t RecordsAffected;
 	try
 	{
+		m_pConnection->BeginTrans();
 		m_pConnection->Execute((_bstr_t)lpSql, &RecordsAffected, adCmdText);
+		m_pConnection->CommitTrans();
 	}
 	catch (_com_error &e)
 	{
@@ -186,6 +196,37 @@ BOOL ADOTools::OnExecuteADODB(LPCTSTR lpSql)
 	}
 
 	return TRUE;
+}
+
+void ADOTools::GetDBTableNames()
+{
+	try
+	{
+			m_pRecordset = m_pConnection->OpenSchema(adSchemaTables);
+			while (!(m_pRecordset->adoEOF))
+			{
+				//获取表格   
+				_bstr_t table_name = m_pRecordset->Fields->GetItem("TABLE_NAME")->Value;
+
+				//获取表格类型        
+				_bstr_t table_type = m_pRecordset->Fields->GetItem("TABLE_TYPE")->Value;
+
+				//过滤一下，只输出表格名称，其他的省略
+				if (strcmp(((LPCSTR)table_type), "TABLE") == 0) {
+					tableName = (LPCSTR)table_name;
+					//AfxMessageBox(tableName);
+				}
+				m_pRecordset->MoveNext();
+			}
+			m_pRecordset->Close();
+		
+	}
+	catch (_com_error e)///捕捉异常
+	{
+		CString errormessage;
+		errormessage.Format(_T("连接数据库失败!rn错误信息:%s"), e.ErrorMessage());
+		AfxMessageBox(errormessage);
+	}
 }
 
 void ADOTools::ExitADOConn()
@@ -197,6 +238,12 @@ void ADOTools::ExitADOConn()
 			m_pConnection->Close();
 		}
 		m_pConnection = NULL;
+		if (m_pRecordset != NULL && m_pRecordset->State)
+		{
+			m_pRecordset->Close();
+		}
+		m_pRecordset = NULL;
+		
 	}
 	catch (_com_error e)
 	{
