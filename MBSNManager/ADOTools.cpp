@@ -29,7 +29,7 @@ BOOL ADOTools::CreateADOData(CString fileName)
 	else
 	{
 		ADOX::_CatalogPtr m_pCatalog = NULL;
-		_bstr_t ConnectString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source = " +
+		_bstr_t ConnectString = "Provider=Microsoft.ACE.OLEDB.16.0; Data Source = " +
 			(_bstr_t)fileName;
 		ADOX::_TablePtr m_pTable = NULL;
 		try
@@ -59,15 +59,27 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			_bstr_t bstr1 = "CREATE TABLE SNTable";
 			_bstr_t bstr2 = "(OrderNo Text, Date Text, Model Text, SnNo Text, Client Text, Sale Text)";
 			_bstr_t CommandText = bstr1 + bstr2;
-			m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
+			//m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
+
+			struct _Recordset * _result = 0;
+			HRESULT _hr = m_pConnection->raw_Execute(CommandText, &RecordsAffected, adCmdText, &_result);
+			if (FAILED(_hr))
+			{
+				_com_issue_errorex(_hr, m_pConnection, __uuidof(_ConnectionPtr));
+			}
+
 			m_pConnection->CommitTrans();
 
 			//accessPath = fileName;
 			//accessName = name + _T(".accdb");
 		}
-		catch (_com_error* e)
+		catch (_com_error &e)
 		{
-			AfxMessageBox(e->ErrorMessage());
+			CString errormessage;
+			errormessage.Format(_T("%s"), e.ErrorMessage());
+			errormessage.Append(_T("\r\n"));
+			errormessage.Append(e.Description());
+			AfxMessageBox(errormessage);
 			return FALSE;
 		}
 	}
@@ -76,25 +88,38 @@ BOOL ADOTools::CreateADOData(CString fileName)
 
 BOOL ADOTools::OnConnADODB()
 {
+	_bstr_t mysql = "Provider=Microsoft.ACE.OLEDB.16.0;Data Source=" + (_bstr_t)accessFile;
+	//_bstr_t mysql = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + (_bstr_t)accessFile;
 	try
 	{
 		CoInitialize(NULL);
 		m_pConnection = _ConnectionPtr(__uuidof(Connection));//创建连接对象
-		m_pConnection->ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source="+ (_bstr_t)accessFile;
+		//m_pConnection->ConnectionString = mysql;
+		//AfxMessageBox(mysql);
 		m_pConnection->ConnectionTimeout = 20;
 		//adConnectUnsepecified(默认值，同步）和adAsyncConnect(异步）
-		m_pConnection->Open("", "", "", adConnectUnspecified);
+		//m_pConnection->Open(mysql, "", "", adConnectUnspecified);
+
+		HRESULT hr = m_pConnection->raw_Open(mysql, (BSTR)"", (BSTR)"", adConnectUnspecified);
+		if (FAILED(hr))
+		{
+			_com_issue_errorex(hr, m_pConnection, __uuidof(_ConnectionPtr));
+		}
+
 		m_pRecordset = _RecordsetPtr(__uuidof(Recordset));//创建记录集对象
 		GetDBTableNames();//初始化表名
 		if (tableName.GetLength()==0)
 		{
-			AfxMessageBox(_T("数据库没有创建表"));
 			return FALSE;
 		}
 	}
-	catch (_com_error* e)
+	catch (_com_error &e)
 	{
-		AfxMessageBox(e->ErrorMessage());
+		CString errormessage;
+		errormessage.Format(_T("%s"), e.ErrorMessage());
+		errormessage.Append(_T("\r\n"));
+		errormessage.Append(e.Description());
+		AfxMessageBox(errormessage);
 		return FALSE;
 	}
 	return TRUE;

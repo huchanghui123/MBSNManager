@@ -11,6 +11,11 @@
 #include "framework.h"
 #include <vector>
 #include <afxcontrolbars.h>
-#import "C:\Program Files\Common Files\System\ado\msado15.dll" no_namespace rename("EOF","adoEOF")
-#import "C:\Program Files\Common Files\system\ado\msadox.dll" rename_namespace("ADOX")
+
+#import "C:\Program Files (x86)\Common Files\System\ado\msado15.dll" \
+			no_namespace\
+			rename("EOF","adoEOF")
+#import "C:\Program Files\Common Files\system\ado\msadox.dll" \
+			rename_namespace("ADOX")
+
 #endif //PCH_H

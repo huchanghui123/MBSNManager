@@ -294,6 +294,7 @@ void CMBSNManagerDlg::OnInitDataBase()
 void CMBSNManagerDlg::OnConDBAndUpdateList()
 {
 	BOOL cret = ado.OnConnADODB();
+	//cret = FALSE;
 	if (cret)
 	{
 		GetDlgItem(IDC_FIND_BTN)->EnableWindow(TRUE);
