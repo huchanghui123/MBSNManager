@@ -87,7 +87,7 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_COMMAND(ID_OPEN, &CMBSNManagerDlg::OpenAccessData)
 	ON_COMMAND(ID_CLOSE, &CMBSNManagerDlg::CloseAccessData)
 	ON_COMMAND(ID_NEW, &CMBSNManagerDlg::CreateAccessData)
-	ON_MESSAGE(WM_ONINIT_ACCESS, OnInitAccessChange)
+	ON_MESSAGE(WM_CREATEDB_ACCESS, OnCreateAccessChange)
 
 	ON_BN_CLICKED(IDC_FIND_BTN, &CMBSNManagerDlg::OnBnClickedFindBtn)
 	ON_BN_CLICKED(IDC_ADD_BTN, &CMBSNManagerDlg::OnBnClickedAddBtn)
@@ -217,9 +217,10 @@ CString accessName;
 CString tableName;
 ADOTools ado;
 
-LRESULT CMBSNManagerDlg::OnInitAccessChange(WPARAM wParam, LPARAM lParam)
+LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
 {
-	//OnInitDataBase();
+	CloseAccessData();
+	OnConDBAndUpdateList();
 	return 0;
 }
 
@@ -285,7 +286,7 @@ void CMBSNManagerDlg::OnInitDataBase()
 	BOOL df = OnInitDataFile();
 	if (!df)
 	{
-		AfxMessageBox(_T("数据库不存在!"));
+		GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(_T("数据库不存在!"));
 		return;
 	}
 	OnConDBAndUpdateList();
@@ -294,7 +295,6 @@ void CMBSNManagerDlg::OnInitDataBase()
 void CMBSNManagerDlg::OnConDBAndUpdateList()
 {
 	BOOL cret = ado.OnConnADODB();
-	//cret = FALSE;
 	if (cret)
 	{
 		GetDlgItem(IDC_FIND_BTN)->EnableWindow(TRUE);
@@ -419,7 +419,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 		sn = sn1 + temp;
 
 		TCHAR szSql[1024] = { 0 };
-		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Clinet,Sale)\
+		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale)\
 							 VALUES('%s','%s','%s','%s','%s','%s')"), 
 			(LPCTSTR)tableName,
 			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
@@ -491,7 +491,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			whereSn = snVec[i];
 
 			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
 				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
 				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)whereSn);
 
@@ -508,7 +508,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		}
 		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
 		_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Clinet='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
 			(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
 			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)input);
 		BOOL ret = ado.OnExecuteADODB(szSql);

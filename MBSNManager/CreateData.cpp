@@ -36,21 +36,21 @@ END_MESSAGE_MAP()
 
 void CreateData::OnBnClickedButton1()
 {
-	CString fileName;
-	GetDlgItemText(IDC_EDIT1, fileName);
+	CString dbName;
+	GetDlgItemText(IDC_EDIT1, dbName);
 
-	if (fileName.Trim().GetLength() == 0)
+	if (dbName.Trim().GetLength() == 0)
 	{
 		return;
 	}
-	fileName = accessPath + _T("\\") + fileName + _T(".accdb");
-	//AfxMessageBox(fileName);
+	dbName = accessPath + _T("\\") + dbName + _T(".accdb");
 	ADOTools ado;
-	BOOL ret = ado.CreateADOData(fileName);
+	BOOL ret = ado.CreateADOData(dbName);
 	if (ret)
 	{
 		AfxMessageBox(_T("数据库创建成功!"));
-		GetParent()->SendMessage(WM_ONINIT_ACCESS, 0, 0);
+		accessFile = dbName;
+		GetParent()->SendMessage(WM_CREATEDB_ACCESS, 0, 0);
 		SendMessage(WM_CLOSE);
 	}
 

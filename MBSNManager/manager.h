@@ -13,4 +13,4 @@ extern CString accessPath;
 extern CString accessName;
 extern CString tableName;
 
-#define WM_ONINIT_ACCESS WM_USER + 100
+#define WM_CREATEDB_ACCESS WM_USER + 100

@@ -43,7 +43,7 @@ protected:
 	void OnInitDataBase();
 	void OnConDBAndUpdateList();
 	void RefListView();
-	afx_msg  LRESULT  OnInitAccessChange(WPARAM wParam, LPARAM lParam);
+	afx_msg  LRESULT  OnCreateAccessChange(WPARAM wParam, LPARAM lParam);
 
 public:
 	CListCtrl mList;

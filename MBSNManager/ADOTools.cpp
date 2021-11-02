@@ -14,13 +14,6 @@ ADOTools::~ADOTools(void)
 
 BOOL ADOTools::CreateADOData(CString fileName)
 {
-	/*TCHAR filePath[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, filePath);
-
-	CString fileName;
-	fileName.Format(_T("%s"),filePath);
-	fileName = fileName + _T("\\") + name+ _T(".accdb");*/
-
 	if (PathFileExists(fileName))
 	{
 		AfxMessageBox(_T("数据库已存在!"));
@@ -41,23 +34,12 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			m_pConnection = _ConnectionPtr(__uuidof(Connection));
 			m_pConnection->ConnectionTimeout = 20;
 			m_pConnection->Open(ConnectString, "", "", adModeUnknown);
-			//创建表
-			//m_pCatalog->PutActiveConnection(ConnectString);
-			/*m_pTable.CreateInstance(__uuidof(ADOX::Table));
-			m_pTable->PutName("SNTable");
-			m_pTable->Columns->Append("OrderNo", ADOX::adBSTR, 0);
-			m_pTable->Columns->Append("Date", ADOX::adBSTR, 0);
-			m_pTable->Columns->Append("Model", ADOX::adBSTR, 0);
-			m_pTable->Columns->Append("SnNo", ADOX::adBSTR, 0);
-			m_pTable->Columns->Append("Client", ADOX::adBSTR, 0);
-			m_pTable->Columns->Append("Sale", ADOX::adBSTR, 0);
-			m_pCatalog->Tables->Append(
-				_variant_t((IDispatch *)m_pTable));*/
-
+			
+			//创建数据表
 			m_pConnection->BeginTrans();
 			_variant_t RecordsAffected;
 			_bstr_t bstr1 = "CREATE TABLE SNTable";
-			_bstr_t bstr2 = "(OrderNo Text, Date Text, Model Text, SnNo Text, Client Text, Sale Text)";
+			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text, Client Text, Sale Text)";
 			_bstr_t CommandText = bstr1 + bstr2;
 			//m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
 
@@ -69,9 +51,11 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			}
 
 			m_pConnection->CommitTrans();
+			if ( m_pConnection->State)
+			{
+				m_pConnection->Close();
+			}
 
-			//accessPath = fileName;
-			//accessName = name + _T(".accdb");
 		}
 		catch (_com_error &e)
 		{
@@ -147,7 +131,7 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 		data.ordate = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("OrderDate"));
 		data.model = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Model"));
 		data.sn = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("SerialNo"));
-		data.client = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Clinet"));
+		data.client = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Client"));
 		data.sale = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Sale"));
 		dbVector.push_back(data);
 
@@ -189,7 +173,7 @@ BOOL ADOTools::OnAddADODB(SNDATA snd)
 {
 	_variant_t RecordsAffected;
 	TCHAR szSql[1024] = { 0 };
-	_stprintf(szSql, _T("INSERT INTO SNTable(OrderNo,OrderDate,Model,SerialNo,Clinet,Sale) VALUES('%s','%s','%s','%s','%s','%s')"),
+	_stprintf(szSql, _T("INSERT INTO SNTable(OrderNo,OrderDate,Model,SerialNo,Client,Sale) VALUES('%s','%s','%s','%s','%s','%s')"),
 		(LPCTSTR)snd.order, (LPCTSTR)snd.ordate, (LPCTSTR)snd.model,
 		(LPCTSTR)snd.sn, (LPCTSTR)snd.client, (LPCTSTR)snd.sale);
 	try {
