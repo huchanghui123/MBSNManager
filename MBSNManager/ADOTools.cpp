@@ -39,7 +39,7 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			m_pConnection->BeginTrans();
 			_variant_t RecordsAffected;
 			_bstr_t bstr1 = "CREATE TABLE SNTable";
-			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text, Client Text, Sale Text)";
+			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text NOT NULL Unique, Client Text, Sale Text)";
 			_bstr_t CommandText = bstr1 + bstr2;
 			//m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
 
@@ -48,10 +48,14 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			if (FAILED(_hr))
 			{
 				_com_issue_errorex(_hr, m_pConnection, __uuidof(_ConnectionPtr));
+				m_pConnection->RollbackTrans();
 			}
-
-			m_pConnection->CommitTrans();
-			if ( m_pConnection->State)
+			else
+			{
+				m_pConnection->CommitTrans();
+			}
+			
+			if ( m_pConnection->State == adStateOpen)
 			{
 				m_pConnection->Close();
 			}
@@ -112,15 +116,27 @@ BOOL ADOTools::OnConnADODB()
 vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 {
 	vector<SNDATA> dbVector = {};
+	
 	if (m_pRecordset!=NULL)
 	{
-		m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
-			adOpenDynamic, adLockOptimistic, adCmdText);
-	}
-	else
-	{
-		AfxMessageBox(_T("数据库未连接"));
-		return dbVector;
+		//m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+		//	adOpenDynamic, adLockOptimistic, adCmdText);
+		try
+		{
+			HRESULT hr = m_pRecordset->raw_Open((_variant_t)lpSql, (_variant_t)m_pConnection.GetInterfacePtr(),
+				adOpenDynamic, adLockOptimistic, adCmdText);
+			if (FAILED(hr))
+				_com_issue_errorex(hr, m_pRecordset, __uuidof(_Recordset));
+		}
+		catch (_com_error &e)
+		{
+			CString errormessage;
+			errormessage.Format(_T("%s"), e.ErrorMessage());
+			errormessage.Append(_T("\r\n"));
+			errormessage.Append(e.Description());
+			AfxMessageBox(errormessage);
+			return dbVector;
+		}
 	}
 	
 	while (!m_pRecordset->adoEOF)
@@ -169,38 +185,33 @@ vector<CString> ADOTools::GetADODBSNForSql(LPCTSTR lpSql)
 	return snVector;
 }
 
-BOOL ADOTools::OnAddADODB(SNDATA snd)
-{
-	_variant_t RecordsAffected;
-	TCHAR szSql[1024] = { 0 };
-	_stprintf(szSql, _T("INSERT INTO SNTable(OrderNo,OrderDate,Model,SerialNo,Client,Sale) VALUES('%s','%s','%s','%s','%s','%s')"),
-		(LPCTSTR)snd.order, (LPCTSTR)snd.ordate, (LPCTSTR)snd.model,
-		(LPCTSTR)snd.sn, (LPCTSTR)snd.client, (LPCTSTR)snd.sale);
-	try {
-		m_pConnection->BeginTrans();
-		m_pConnection->Execute((_bstr_t)szSql, &RecordsAffected, adCmdText);
-		m_pConnection->CommitTrans();
-	}
-	catch (_com_error &e) {
-		AfxMessageBox((LPCTSTR)e.Description());
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 BOOL ADOTools::OnExecuteADODB(LPCTSTR lpSql)
 {
 	_variant_t RecordsAffected;
 	try
 	{
 		m_pConnection->BeginTrans();
-		m_pConnection->Execute((_bstr_t)lpSql, &RecordsAffected, adCmdText);
-		m_pConnection->CommitTrans();
+		//m_pConnection->Execute((_bstr_t)lpSql, &RecordsAffected, adCmdText);
+		struct _Recordset * _result = 0;
+		HRESULT _hr = m_pConnection->raw_Execute((_bstr_t)lpSql, &RecordsAffected, adCmdText, &_result);
+		if (FAILED(_hr))
+		{
+			_com_issue_errorex(_hr, m_pConnection, __uuidof(_ConnectionPtr));
+			m_pConnection->RollbackTrans();
+		}
+		else
+		{
+			m_pConnection->CommitTrans();
+		}
 	}
 	catch (_com_error &e)
 	{
-		AfxMessageBox((LPCTSTR)e.Description());
+		CString errormessage;
+		errormessage.Format(_T("%s"), e.ErrorMessage());
+		errormessage.Append(_T("\r\n"));
+		errormessage.Append(e.Description());
+		errorMsg = errormessage;
+		//AfxMessageBox(errormessage);
 		return FALSE;
 	}
 
@@ -227,7 +238,10 @@ void ADOTools::GetDBTableNames()
 				}
 				m_pRecordset->MoveNext();
 			}
-			m_pRecordset->Close();
+			if (m_pRecordset->State)
+			{
+				m_pRecordset->Close();
+			}
 		
 	}
 	catch (_com_error e)///捕捉异常

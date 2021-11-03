@@ -38,7 +38,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 
-	void OnInitDBList();
+	void OnInitView();
 	BOOL OnInitDataFile();
 	void OnInitDataBase();
 	void OnConDBAndUpdateList();
@@ -59,6 +59,9 @@ public:
 	afx_msg void OnBnClickedMfBtn();
 	afx_msg void OnCbnSelchangeMfCombo();
 	int mfNum;
-	MyCEditEx addStartSN;
-	MyCEditEx mfStartSN;
+	//MyCEditEx addStartSN;
+	//MyCEditEx mfStartSN;
+	CComboBox saleCombo;
+	CEdit addSNEdit;
+	CEdit mfSNEdit;
 };

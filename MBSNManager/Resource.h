@@ -19,10 +19,9 @@
 #define IDC_ADD_MODEL                   1007
 #define IDC_ADD_CLIENT                  1008
 #define IDC_ADD_SALE                    1009
-#define IDC_ADD_SN1                     1010
+#define IDC_ADD_SN                      1010
 #define IDC_ADD_NUM                     1011
 #define IDC_ADD_BTN                     1012
-#define IDC_ADD_SN2                     1013
 #define IDC_DEL_EDIT                    1014
 #define IDC_DEL_BTN                     1015
 #define IDC_COMBO1                      1016
@@ -36,10 +35,11 @@
 #define IDC_MF_CLIENT                   1024
 #define IDC_MF_SALE                     1025
 #define IDC_MF_SN                       1026
-#define IDC_MF_SN1                      1026
 #define IDC_DATA_TOTAL                  1027
-#define IDC_MF_SN2                      1028
 #define IDC_MF_NUM                      1029
+#define IDC_SALE_COMBO                  1030
+#define IDC_LIST3                       1033
+#define IDC_MF_NEWSN                    1034
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_ABOUT                        32773
@@ -59,7 +59,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32783
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

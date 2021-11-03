@@ -74,8 +74,9 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO2, delCBox);
 	DDX_Control(pDX, IDC_MF_COMBO, mfCBox);
 	DDX_Text(pDX, IDC_MF_NUM, mfNum);
-	DDX_Control(pDX, IDC_ADD_SN2, addStartSN);
-	DDX_Control(pDX, IDC_MF_SN2, mfStartSN);
+	DDX_Control(pDX, IDC_SALE_COMBO, saleCombo);
+	DDX_Control(pDX, IDC_ADD_SN, addSNEdit);
+	DDX_Control(pDX, IDC_MF_SN, mfSNEdit);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -134,7 +135,7 @@ BOOL CMBSNManagerDlg::OnInitDialog()
 	m_Menu.LoadMenu(IDR_MENU1);
 	SetMenu(&m_Menu);
 
-	OnInitDBList();
+	OnInitView();
 	OnInitDataBase();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -189,8 +190,19 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CMBSNManagerDlg::OnInitDBList()
+CString sales[15] = {
+	_T("A1"),_T("A2"),_T("A3"),_T("A4"),_T("A5"),
+	_T("B1"),_T("B2"),_T("B3"),_T("B4"),_T("B5"),
+	_T("C1"),_T("C2"),_T("C3"),_T("C4"),_T("C5")
+};
+
+void CMBSNManagerDlg::OnInitView()
 {
+	CTime time;
+	time = CTime::GetCurrentTime();
+	CString dateStr = time.Format("%Y-%m-%d");
+	GetDlgItem(IDC_ADD_DATE)->SetWindowText(dateStr);
+
 	findCBox.InsertString(0, _T("订单号"));
 	findCBox.InsertString(1, _T("条码"));
 	findCBox.SetCurSel(1);
@@ -200,6 +212,12 @@ void CMBSNManagerDlg::OnInitDBList()
 	mfCBox.InsertString(0, _T("订单号"));
 	mfCBox.InsertString(1, _T("条码"));
 	mfCBox.SetCurSel(1);
+
+	for (int i=0;i<15;i++)
+	{
+		saleCombo.InsertString(i, sales[i]);
+	}
+	saleCombo.SetCurSel(0);
 
 	mList.InsertColumn(0, _T("NO"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
@@ -215,6 +233,7 @@ CString accessFile;
 CString accessPath;
 CString accessName;
 CString tableName;
+CString errorMsg;
 ADOTools ado;
 
 LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
@@ -307,7 +326,7 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 		vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
 
 		CString status;
-		status.Format(_T("Table: %s	Total: %d	DB: %s	"), tableName, vecdata.size(), accessFile);
+		status.Format(_T("Total: %d	DB: %s	"), vecdata.size(), accessFile);
 		GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(status);
 
 		mList.DeleteAllItems();
@@ -351,7 +370,7 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 
 	vector<SNDATA> vecdata = ado.GetADODBForSql(szSql);
 	CString total;
-	total.Format(_T("Total: %d"), vecdata.size());
+	total.Format(_T("Total: %d	DB: %s	"), vecdata.size(), accessFile);
 	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
 
 	if (vecdata.size() > 0)
@@ -390,42 +409,54 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	CString client;
 	CString sale;
 	CString sn;
-	CString sn1;
-	CString sn2;
+	CString snPre;
+	CString snSuf;
+	//CString sn1;
+	//CString sn2;
 	CString temp;
+	CString finalSN;
 
 	GetDlgItemText(IDC_ADD_ORDER, order);
 	GetDlgItemText(IDC_ADD_DATE, date);
 	GetDlgItemText(IDC_ADD_MODEL, model);
 	GetDlgItemText(IDC_ADD_CLIENT, client);
-	GetDlgItemText(IDC_ADD_SALE, sale);
-	GetDlgItemText(IDC_ADD_SN1, sn1);
-	GetDlgItemText(IDC_ADD_SN2, sn2);
-
+	//GetDlgItemText(IDC_ADD_SALE, sale);
+	sale = sales[saleCombo.GetCurSel()];
+	//GetDlgItemText(IDC_ADD_SN1, sn1);
+	//GetDlgItemText(IDC_ADD_SN2, sn2);
+	addSNEdit.GetWindowText(sn);
+	snPre = sn.Mid(0, 3);
+	snSuf = sn.Mid(3, sn.Trim().GetLength());
 
 	if (order.Trim().GetLength() == 0 || date.Trim().GetLength() == 0||
-		model.Trim().GetLength() == 0 || sn1.Trim().GetLength() == 0||
-		sn2.Trim().GetLength() == 0 || sale.Trim().GetLength() == 0 )
+		model.Trim().GetLength() == 0 || sn.Trim().GetLength() == 0||
+		sale.Trim().GetLength() == 0 )
 	{
 		AfxMessageBox(_T("数据不能为空"));
 	}
-	int length = sn2.GetLength();
-	int snval = atoi((CT2A)sn2);
+	int length = snSuf.GetLength();
+	int snval = atoi((CT2A)snSuf);
 	int addNo;
-	for (int i=0; i<num; i++)
+	for (int i = 0; i < num; i++)
 	{
 		addNo = snval + i;
 		temp.Format(_T("%0*d"), length, addNo);
-		sn = sn1 + temp;
+		finalSN = snPre + temp;
 
 		TCHAR szSql[1024] = { 0 };
 		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale)\
-							 VALUES('%s','%s','%s','%s','%s','%s')"), 
+							 VALUES('%s','%s','%s','%s','%s','%s')"),
 			(LPCTSTR)tableName,
 			(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)sn, (LPCTSTR)client, (LPCTSTR)sale);
+			(LPCTSTR)finalSN, (LPCTSTR)client, (LPCTSTR)sale);
+		//_tprintf(szSql);
 
-		ado.OnExecuteADODB(szSql);
+		BOOL ret = ado.OnExecuteADODB(szSql);
+		if (!ret)
+		{
+			AfxMessageBox(errorMsg);
+			return;
+		}
 	}
 
 	RefListView();
@@ -440,9 +471,13 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	CString client;
 	CString sale;
 	CString sn;
-	CString sn1;
-	CString sn2;
+	CString newSn;
+	//CString sn1;
+	//CString sn2;
+	CString snPre;
+	CString snSuf;
 	CString temp;
+	CString finalSN;
 	CString input;
 
 	GetDlgItemText(IDC_MF_ORDER, order);
@@ -450,72 +485,115 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	GetDlgItemText(IDC_MF_MODEL, model);
 	GetDlgItemText(IDC_MF_CLIENT, client);
 	GetDlgItemText(IDC_MF_SALE, sale);
-	GetDlgItemText(IDC_MF_SN1, sn1);
-	GetDlgItemText(IDC_MF_SN2, sn2);
+	//GetDlgItemText(IDC_MF_SN1, sn1);
+	//GetDlgItemText(IDC_MF_SN2, sn2);
+	mfSNEdit.GetWindowText(sn);
+	GetDlgItemText(IDC_MF_NEWSN, newSn);
 	GetDlgItemText(IDC_MF_EDIT, input);
+	snPre = newSn.Mid(0, 3);
+	snSuf = newSn.Mid(3, newSn.Trim().GetLength());
+
 
 	TCHAR szSql[1024] = { 0 };
 
+	//订单号批量修改数据
 	if (mfCBox.GetCurSel() == 0)
 	{
-		if (sn1.Trim().GetLength()==0||sn2.Trim().GetLength()==0)
-		{
-			AfxMessageBox(_T("条码不能为空"));
-			return;
-		}
 		int num = mfNum;
-		//查询出订单号的所有条码
-		TCHAR snSql[1024] = { 0 };
-		_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
-		vector<CString> snVec = ado.GetADODBSNForSql(snSql);
-		int snsize = snVec.size();
-		if (snsize <= 0)
+		//如果条码为空，那么SQL语句用订单号作为条件
+		if (num<=1 || sn.Trim().GetLength()==0)
 		{
-			AfxMessageBox(_T("关键数据为空,无法修改"));
-			return;
-		}
-		
-		if (num > snsize)
-		{
-			num = snsize;
-		}
-		int length = sn2.GetLength();
-		int snval = atoi((CT2A)sn2);
-		int addNo;
-		CString whereSn;
-		for (int i = 0; i < num; i++)
-		{
-			addNo = snval + i;
-			temp.Format(_T("%0*d"), length, addNo);
-			sn = sn1 + temp;
-			whereSn = snVec[i];
-
+			//AfxMessageBox(_T("条码不能为空"));
 			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Client='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s' WHERE OrderNo='%s'"),
 				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)whereSn);
+				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)input);
 
-			ado.OnExecuteADODB(szSql);
+			BOOL ret = ado.OnExecuteADODB(szSql);
+			if (!ret)
+			{
+				AfxMessageBox(errorMsg);
+				return;
+			}
+		}
+		else
+		{
+			//批量修改的数据如果包括条码，那么SQL语句的条件需使用条码号
+			//批量修改只能从当前订单第一条开始修改，无法只修改中间一段数据
+			//先查询出当前订单号的所有条码
+			TCHAR snSql[1024] = { 0 };
+			_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
+			vector<CString> snVec = ado.GetADODBSNForSql(snSql);
+			int snsize = snVec.size();
+			if (snsize <= 0)
+			{
+				AfxMessageBox(_T("没有找到条码,无法修改"));
+				return;
+			}
+			
+			int start = 0;
+			
+			for each (CString var in snVec)
+			{
+				if (lstrcmp(sn, var)==0)
+				{
+					break;
+				}
+				start++;
+			}
+			//修改的数量不能越界
+			if (start+num > snsize-start)
+			{
+				num = snsize-start;
+			}
+
+			
+			CString oldSN;
+			int length = snSuf.GetLength();
+			int snval = atoi((CT2A)snSuf);
+			int mfNo;
+			for (int i = 0; i < num; i++)
+			{
+				mfNo = snval + i;
+				temp.Format(_T("%0*d"), length, mfNo);
+				finalSN = snPre + temp;
+				oldSN = snVec[start+i];
+
+				_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Client='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+							(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+							(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)finalSN, (LPCTSTR)oldSN);
+
+				BOOL ret = ado.OnExecuteADODB(szSql);
+				if (!ret)
+				{
+					AfxMessageBox(errorMsg);
+					return;
+				}
+			}
 		}
 		RefListView();
 	}
 	else
 	{
-		sn = sn1 + sn2;
-		if (sn.Trim().GetLength()==0)
+		//条码修改单条数据
+		input.Trim();
+		if (newSn.Trim().GetLength()==0)
 		{
-			sn = input;
+			newSn = input;
+			SetDlgItemText(IDC_MF_NEWSN, newSn);
 		}
-		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
 		_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
 						Client='%s',Sale='%s',SerialNo='%s' WHERE SerialNo='%s'"),
 			(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)sn, (LPCTSTR)input);
+			(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)newSn, (LPCTSTR)input);
 		BOOL ret = ado.OnExecuteADODB(szSql);
-		if (ret)
+		if (!ret)
 		{
-			RefListView();
+			AfxMessageBox(errorMsg);
+			return;
 		}
+		RefListView();
 	}
 }
 
@@ -532,9 +610,13 @@ void CMBSNManagerDlg::RefListView()
 	lpSql.Format(_T("SELECT * FROM %s"), tableName);
 	
 	vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
+	if (vecdata.size()==0)
+	{
+		return;
+	}
 	
 	CString status;
-	status.Format(_T("Table: %s	Total: %d	DB: %s	"), tableName, vecdata.size(), accessFile);
+	status.Format(_T("Total: %d	DB: %s	"), vecdata.size(), accessFile);
 	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(status);
 
 	mList.DeleteAllItems();
@@ -580,7 +662,9 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 			SetDlgItemText(IDC_MF_MODEL, modelstr);
 			SetDlgItemText(IDC_MF_CLIENT, clientstr);
 			SetDlgItemText(IDC_MF_SALE, salestr);
-			
+			mfSNEdit.SetWindowText(snstr);
+			SetDlgItemText(IDC_MF_NEWSN, snstr);
+
 			if (mfCBox.GetCurSel() == 0)
 				SetDlgItemText(IDC_MF_EDIT, orderstr);
 			else
@@ -642,10 +726,10 @@ void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 {
 	if (mfCBox.GetCurSel() == 0)
 	{
-		//GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
 	}
 	else
 	{
-		//GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
+		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
 	}
 }

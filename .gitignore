@@ -261,3 +261,5 @@ __pycache__/
 *.pyc
 /test.accdb
 /nnn.accdb
+/MBSNManager/yy.accdb
+/MBSNManager/TT.accdb
