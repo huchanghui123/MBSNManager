@@ -62,6 +62,8 @@ public:
 	//MyCEditEx addStartSN;
 	//MyCEditEx mfStartSN;
 	CComboBox saleCombo;
-	CEdit addSNEdit;
+	MyCEditEx addSNEdit;
 	CEdit mfSNEdit;
+	CEdit newSnEdit;
+	afx_msg void OnEnChangeAddSn();
 };

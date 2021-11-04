@@ -5,5 +5,6 @@ class MyCEditEx :
 {
 	//¼àÌıÊäÈëµÄ×Ö·û
 	BOOL PreTranslateMessage(MSG* pMsg);
+
 };
 

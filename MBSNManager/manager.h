@@ -12,6 +12,7 @@ extern CString accessPath;
 extern CString accessName;
 extern CString tableName;
 extern CString errorMsg;
+extern int addSnl;
 
 
 #define WM_CREATEDB_ACCESS WM_USER + 100

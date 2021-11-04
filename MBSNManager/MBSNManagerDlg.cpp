@@ -77,6 +77,7 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SALE_COMBO, saleCombo);
 	DDX_Control(pDX, IDC_ADD_SN, addSNEdit);
 	DDX_Control(pDX, IDC_MF_SN, mfSNEdit);
+	DDX_Control(pDX, IDC_MF_NEWSN, newSnEdit);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -97,6 +98,7 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, OnItemchangedList1)
 	ON_BN_CLICKED(IDC_MF_BTN, &CMBSNManagerDlg::OnBnClickedMfBtn)
 	ON_CBN_SELCHANGE(IDC_MF_COMBO, &CMBSNManagerDlg::OnCbnSelchangeMfCombo)
+	ON_EN_CHANGE(IDC_ADD_SN, &CMBSNManagerDlg::OnEnChangeAddSn)
 END_MESSAGE_MAP()
 
 
@@ -190,6 +192,14 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+int addSnl;
+CString accessFile;
+CString accessPath;
+CString accessName;
+CString tableName;
+CString errorMsg;
+ADOTools ado;
+
 CString sales[15] = {
 	_T("A1"),_T("A2"),_T("A3"),_T("A4"),_T("A5"),
 	_T("B1"),_T("B2"),_T("B3"),_T("B4"),_T("B5"),
@@ -228,13 +238,6 @@ void CMBSNManagerDlg::OnInitView()
 	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 70);
 	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 60);
 }
-
-CString accessFile;
-CString accessPath;
-CString accessName;
-CString tableName;
-CString errorMsg;
-ADOTools ado;
 
 LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
 {
@@ -503,7 +506,6 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		//如果条码为空，那么SQL语句用订单号作为条件
 		if (num<=1 || sn.Trim().GetLength()==0)
 		{
-			//AfxMessageBox(_T("条码不能为空"));
 			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
 						Client='%s',Sale='%s' WHERE OrderNo='%s'"),
 				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
@@ -519,7 +521,6 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		else
 		{
 			//批量修改的数据如果包括条码，那么SQL语句的条件需使用条码号
-			//批量修改只能从当前订单第一条开始修改，无法只修改中间一段数据
 			//先查询出当前订单号的所有条码
 			TCHAR snSql[1024] = { 0 };
 			_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
@@ -726,10 +727,15 @@ void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 {
 	if (mfCBox.GetCurSel() == 0)
 	{
-		GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
+		//GetDlgItem(IDC_MF_SN)->EnableWindow(TRUE);
 	}
 	else
 	{
-		GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
+		//GetDlgItem(IDC_MF_SN)->EnableWindow(FALSE);
 	}
+}
+
+void CMBSNManagerDlg::OnEnChangeAddSn()
+{
+	addSnl = addSNEdit.GetWindowTextLength();
 }
