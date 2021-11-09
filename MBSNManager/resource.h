@@ -40,6 +40,7 @@
 #define IDC_SALE_COMBO                  1030
 #define IDC_LIST3                       1033
 #define IDC_MF_NEWSN                    1034
+#define IDC_TYPE_COMBO                  1035
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_ABOUT                        32773
@@ -59,7 +60,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32783
-#define _APS_NEXT_CONTROL_VALUE         1035
+#define _APS_NEXT_CONTROL_VALUE         1036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
