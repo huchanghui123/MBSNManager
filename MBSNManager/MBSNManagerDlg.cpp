@@ -99,7 +99,6 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, OnItemchangedList1)
 	ON_BN_CLICKED(IDC_MF_BTN, &CMBSNManagerDlg::OnBnClickedMfBtn)
 	ON_CBN_SELCHANGE(IDC_MF_COMBO, &CMBSNManagerDlg::OnCbnSelchangeMfCombo)
-	ON_EN_CHANGE(IDC_ADD_SN, &CMBSNManagerDlg::OnEnChangeAddSn)
 END_MESSAGE_MAP()
 
 
@@ -193,8 +192,7 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-int addSnl;
-CStringList mbTypsList;
+CStringArray mbTypsArr;
 CString accessFile;
 CString accessPath;
 CString accessName;
@@ -243,7 +241,7 @@ void CMBSNManagerDlg::OnInitView()
 	mList.SetColumnWidth(0, 50);
 	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 120);
 	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 80);
-	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 100);
+	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 130);
 	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 130);
 	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 70);
 	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 60);
@@ -261,11 +259,12 @@ void CMBSNManagerDlg::OnLoadMBTypes()
 	
 	while (AfxExtractSubString(szTemp, types, i, ','))
 	{
-		mbTypsList.AddTail(szTemp);
+		//mbTypsList.AddTail(szTemp);
+		mbTypsArr.Add(szTemp);
 		typeCombo.InsertString(i, szTemp);
 		i++;
 	}
-	typeCombo.SetCurSel(0);
+	//typeCombo.SetCurSel(0);
 }
 
 LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
@@ -431,6 +430,16 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 		AfxMessageBox(_T("没有找到数据"));
 	}
 }
+BOOL IsNum(CString str)
+{
+	int n = str.GetLength();
+	for (int i = 0; i < n; i++)
+	{
+		if ((str[i] < '0') || (str[i] > '9'))
+			return FALSE;
+	}
+	return TRUE;
+}
 
 void CMBSNManagerDlg::OnBnClickedAddBtn()
 {
@@ -452,24 +461,37 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	GetDlgItemText(IDC_ADD_ORDER, order);
 	GetDlgItemText(IDC_ADD_DATE, date);
 	//GetDlgItemText(IDC_ADD_MODEL, model);
-	model = mbTypsList.GetAt(mbTypsList.FindIndex(typeCombo.GetCurSel()));
+	//model = mbTypsArr.GetAt(typeCombo.GetCurSel());
+	if (typeCombo.m_pEdit!=NULL)
+	{
+		typeCombo.m_pEdit->GetWindowText(model);
+	}
+	
 	GetDlgItemText(IDC_ADD_CLIENT, client);
 	//GetDlgItemText(IDC_ADD_SALE, sale);
 	sale = sales[saleCombo.GetCurSel()];
 	//GetDlgItemText(IDC_ADD_SN1, sn1);
 	//GetDlgItemText(IDC_ADD_SN2, sn2);
 	addSNEdit.GetWindowText(sn);
-	snPre = sn.Mid(0, 3);
-	snSuf = sn.Mid(3, sn.Trim().GetLength());
-
+	
 	if (order.Trim().GetLength() == 0 || date.Trim().GetLength() == 0||
 		model.Trim().GetLength() == 0 || sn.Trim().GetLength() == 0||
 		sale.Trim().GetLength() == 0 )
 	{
 		AfxMessageBox(_T("数据不能为空"));
+		return;
 	}
+	snPre = sn.Mid(0, 3);
+	snSuf = sn.Mid(3, sn.Trim().GetLength());
+	BOOL flag = IsNum(snSuf);
+	if (!flag)
+	{
+		AfxMessageBox(_T("条码格式错误!"));
+		return;
+	}
+
 	int length = snSuf.GetLength();
-	int snval = atoi((CT2A)snSuf);
+	int snval = atoi((CT2A)snSuf);//将整数字符串转换未整数
 	int addNo;
 	for (int i = 0; i < num; i++)
 	{
@@ -766,7 +788,3 @@ void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 	}
 }
 
-void CMBSNManagerDlg::OnEnChangeAddSn()
-{
-	addSnl = addSNEdit.GetWindowTextLength();
-}

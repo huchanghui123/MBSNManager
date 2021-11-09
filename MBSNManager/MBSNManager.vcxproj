@@ -188,6 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ADOTools.h" />
+    <ClInclude Include="CAutoCombox.h" />
     <ClInclude Include="CreateData.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="manager.h" />
@@ -200,6 +201,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ADOTools.cpp" />
+    <ClCompile Include="CAutoCombox.cpp" />
     <ClCompile Include="CreateData.cpp" />
     <ClCompile Include="MBSNManager.cpp" />
     <ClCompile Include="MBSNManagerDlg.cpp" />

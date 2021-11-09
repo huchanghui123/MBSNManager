@@ -40,7 +40,6 @@
 #define IDC_SALE_COMBO                  1030
 #define IDC_LIST3                       1033
 #define IDC_MF_NEWSN                    1034
-#define IDC_COMBO3                      1035
 #define IDC_TYPE_COMBO                  1035
 #define ID_32771                        32771
 #define ID_32772                        32772

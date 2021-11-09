@@ -9,11 +9,10 @@ typedef struct tagSNDATA {
 	CString order, ordate, model, sn, client, sale;
 }SNDATA, *LPSNDATA;
 
-extern CStringList mbTypsList;
+extern CStringArray mbTypsArr;
 extern CString accessFile;
 extern CString accessPath;
 extern CString accessName;
 extern CString tableName;
 extern CString errorMsg;
-extern int addSnl;
 

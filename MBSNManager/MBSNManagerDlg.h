@@ -5,6 +5,7 @@
 #pragma once
 #include "manager.h"
 #include "MyCEditEx.h"
+#include "CAutoCombox.h"
 
 // CMBSNManagerDlg 对话框
 class CMBSNManagerDlg : public CDialogEx
@@ -66,6 +67,6 @@ public:
 	MyCEditEx addSNEdit;
 	CEdit mfSNEdit;
 	CEdit newSnEdit;
-	afx_msg void OnEnChangeAddSn();
-	CComboBox typeCombo;
+	//CComboBox typeCombo;
+	CAutoCombox typeCombo;
 };
