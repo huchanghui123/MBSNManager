@@ -39,6 +39,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	void OnInitView();
+	void OnLoadMBTypes();
 	BOOL OnInitDataFile();
 	void OnInitDataBase();
 	void OnConDBAndUpdateList();
@@ -66,4 +67,5 @@ public:
 	CEdit mfSNEdit;
 	CEdit newSnEdit;
 	afx_msg void OnEnChangeAddSn();
+	CComboBox typeCombo;
 };

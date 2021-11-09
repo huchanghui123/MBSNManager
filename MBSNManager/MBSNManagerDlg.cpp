@@ -78,6 +78,7 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ADD_SN, addSNEdit);
 	DDX_Control(pDX, IDC_MF_SN, mfSNEdit);
 	DDX_Control(pDX, IDC_MF_NEWSN, newSnEdit);
+	DDX_Control(pDX, IDC_TYPE_COMBO, typeCombo);
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -193,6 +194,7 @@ HCURSOR CMBSNManagerDlg::OnQueryDragIcon()
 }
 
 int addSnl;
+CStringList mbTypsList;
 CString accessFile;
 CString accessPath;
 CString accessName;
@@ -208,10 +210,24 @@ CString sales[15] = {
 
 void CMBSNManagerDlg::OnInitView()
 {
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+	SetCurrentDirectory(filePath);
+	CString fileName;
+	fileName.Format(_T("%s"), filePath);
+	accessPath = fileName;
+
 	CTime time;
 	time = CTime::GetCurrentTime();
 	CString dateStr = time.Format("%Y-%m-%d");
 	GetDlgItem(IDC_ADD_DATE)->SetWindowText(dateStr);
+
+	OnLoadMBTypes();
+	for (int i = 0; i < 15; i++)
+	{
+		saleCombo.InsertString(i, sales[i]);
+	}
+	saleCombo.SetCurSel(0);
 
 	findCBox.InsertString(0, _T("订单号"));
 	findCBox.InsertString(1, _T("条码"));
@@ -223,20 +239,33 @@ void CMBSNManagerDlg::OnInitView()
 	mfCBox.InsertString(1, _T("条码"));
 	mfCBox.SetCurSel(1);
 
-	for (int i=0;i<15;i++)
-	{
-		saleCombo.InsertString(i, sales[i]);
-	}
-	saleCombo.SetCurSel(0);
-
 	mList.InsertColumn(0, _T("NO"), LVCFMT_LEFT);
 	mList.SetColumnWidth(0, 50);
 	mList.InsertColumn(1, _T("订单号"), LVCFMT_LEFT, 120);
 	mList.InsertColumn(2, _T("日期"), LVCFMT_LEFT, 80);
-	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 80);
+	mList.InsertColumn(3, _T("型号"), LVCFMT_LEFT, 100);
 	mList.InsertColumn(4, _T("条码"), LVCFMT_LEFT, 130);
 	mList.InsertColumn(5, _T("客户"), LVCFMT_LEFT, 70);
 	mList.InsertColumn(6, _T("业务"), LVCFMT_LEFT, 60);
+}
+
+void CMBSNManagerDlg::OnLoadMBTypes()
+{
+	CString types;
+	CString confifPath = accessPath + _T("\\config.ini");
+
+	GetPrivateProfileString(_T("MBTYPE"), _T("NAME"), _T(""), types.GetBuffer(MAX_PATH), MAX_PATH, confifPath);
+
+	CString szTemp;
+	int i = 0;
+	
+	while (AfxExtractSubString(szTemp, types, i, ','))
+	{
+		mbTypsList.AddTail(szTemp);
+		typeCombo.InsertString(i, szTemp);
+		i++;
+	}
+	typeCombo.SetCurSel(0);
 }
 
 LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
@@ -279,14 +308,15 @@ void CMBSNManagerDlg::CloseAccessData()
 
 BOOL CMBSNManagerDlg::OnInitDataFile()
 {
-	TCHAR filePath[MAX_PATH];
+	/*TCHAR filePath[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, filePath);
 	SetCurrentDirectory(filePath);
 	CString fileName;
 	fileName.Format(_T("%s"), filePath);
-	accessPath = fileName;
+	accessPath = fileName;*/
+
 	CFileFind finder;
-	BOOL isNotEmpty = finder.FindFile(fileName + _T("\\*.accdb"));
+	BOOL isNotEmpty = finder.FindFile(accessPath + _T("\\*.accdb"));
 	if (!isNotEmpty)
 	{
 		return FALSE;
@@ -295,7 +325,7 @@ BOOL CMBSNManagerDlg::OnInitDataFile()
 	{
 		finder.FindNextFile();
 		accessName = finder.GetFileName();
-		accessFile = fileName + _T("\\") + accessName;
+		accessFile = accessPath + _T("\\") + accessName;
 	}
 
 	//AfxMessageBox(accessPath+_T("\r\n")+accessFile);
@@ -421,7 +451,8 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 
 	GetDlgItemText(IDC_ADD_ORDER, order);
 	GetDlgItemText(IDC_ADD_DATE, date);
-	GetDlgItemText(IDC_ADD_MODEL, model);
+	//GetDlgItemText(IDC_ADD_MODEL, model);
+	model = mbTypsList.GetAt(mbTypsList.FindIndex(typeCombo.GetCurSel()));
 	GetDlgItemText(IDC_ADD_CLIENT, client);
 	//GetDlgItemText(IDC_ADD_SALE, sale);
 	sale = sales[saleCombo.GetCurSel()];
