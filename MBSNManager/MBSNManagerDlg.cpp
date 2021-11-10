@@ -249,22 +249,49 @@ void CMBSNManagerDlg::OnInitView()
 
 void CMBSNManagerDlg::OnLoadMBTypes()
 {
-	CString types;
-	CString confifPath = accessPath + _T("\\config.ini");
+	//CString types;
+	//CString confifPath = accessPath + _T("\\config.ini");
+	//GetPrivateProfileString(_T("MBTYPE"), _T("NAME"), _T(""), types.GetBuffer(MAX_PATH), MAX_PATH, confifPath);
+	//CString szTemp;
+	//int i = 0;
+	//while (AfxExtractSubString(szTemp, types, i, ','))
+	//{
+	//	//mbTypsList.AddTail(szTemp);
+	//	mbTypsArr.Add(szTemp);
+	//	typeCombo.InsertString(i, szTemp);
+	//	i++;
+	//}
+	////typeCombo.SetCurSel(0);
 
-	GetPrivateProfileString(_T("MBTYPE"), _T("NAME"), _T(""), types.GetBuffer(MAX_PATH), MAX_PATH, confifPath);
-
-	CString szTemp;
-	int i = 0;
-	
-	while (AfxExtractSubString(szTemp, types, i, ','))
+	CString confifPath2 = accessPath + _T("\\model.txt");
+	CStdioFile file;
+	if (!file.Open(confifPath2, CFile::modeRead))
 	{
-		//mbTypsList.AddTail(szTemp);
-		mbTypsArr.Add(szTemp);
-		typeCombo.InsertString(i, szTemp);
-		i++;
+		AfxMessageBox(_T("打开主板型号配置文件失败!"));
+		return;
 	}
-	//typeCombo.SetCurSel(0);
+	CStringArray arr2;
+	CString temp;
+	int i = 0;
+	while (file.ReadString(temp))
+	{
+		if (temp.Trim().GetLength()>0)
+		{
+			arr2.Add(temp);
+			typeCombo.InsertString(i, temp);
+			i++;
+		}
+	}
+	
+	file.Close();
+	/*CString str;
+	for (int j=0;j<arr2.GetSize();j++)
+	{
+		str += arr2.GetAt(j)+_T(",");
+	}
+	AfxMessageBox(str);*/
+
+
 }
 
 LRESULT CMBSNManagerDlg::OnCreateAccessChange(WPARAM wParam, LPARAM lParam)
@@ -548,8 +575,12 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	GetDlgItemText(IDC_MF_EDIT, input);
 	snPre = newSn.Mid(0, 3);
 	snSuf = newSn.Mid(3, newSn.Trim().GetLength());
-
-
+	BOOL flag = IsNum(snSuf);
+	if (!flag)
+	{
+		AfxMessageBox(_T("新条码格式错误!"));
+		return;
+	}
 	TCHAR szSql[1024] = { 0 };
 
 	//订单号批量修改数据
