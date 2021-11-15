@@ -489,11 +489,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	GetDlgItemText(IDC_ADD_DATE, date);
 	//GetDlgItemText(IDC_ADD_MODEL, model);
 	//model = mbTypsArr.GetAt(typeCombo.GetCurSel());
-	if (typeCombo.m_pEdit!=NULL)
-	{
-		typeCombo.m_pEdit->GetWindowText(model);
-	}
-	
+	typeCombo.GetWindowText(model);
 	GetDlgItemText(IDC_ADD_CLIENT, client);
 	//GetDlgItemText(IDC_ADD_SALE, sale);
 	sale = sales[saleCombo.GetCurSel()];

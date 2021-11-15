@@ -17,11 +17,8 @@ class CAutoCombox :
 		{
 			m_nFlag = nFlag;
 		}
-		void SetInput(CString model)
-		{
-			m_model = model;
-		}
-		CEdit* m_pEdit;//edit control
+		
+		
 
 	private:
 		int Dir(UINT attr, LPCTSTR lpszWildCard)
@@ -39,6 +36,7 @@ class CAutoCombox :
 
 	private:
 		UINT m_nFlag;	//some flag
+		CEdit* m_pEdit;//edit control
 						//bit 0: 0 is show all, 1 is remove not matching, if no maching, show all.
 		CStringArray m_strArr;
 	

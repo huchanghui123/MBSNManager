@@ -37,6 +37,25 @@ CMBSNManagerApp theApp;
 
 
 // CMBSNManagerApp 初始化
+BOOL init()
+{
+	HANDLE mutex = CreateMutex(NULL, FALSE, _T("FCD03715-198E-4F3C-80FF-FEAEB0F3FF8F"));
+	if (mutex == NULL)
+	{
+		return FALSE;
+	}
+
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		/* You only need the message box if you wish to notify the user
+		   that the process is running*/
+		AfxMessageBox(_T("Another instance is already running."));
+		//CloseHandle(mutex);
+		//mutex = NULL;
+		return FALSE;
+	}
+	return TRUE;
+}
 
 BOOL CMBSNManagerApp::InitInstance()
 {
@@ -51,8 +70,7 @@ BOOL CMBSNManagerApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-
-
+	
 	AfxEnableControlContainer();
 
 	// 创建 shell 管理器，以防对话框包含
@@ -70,6 +88,28 @@ BOOL CMBSNManagerApp::InitInstance()
 	// TODO: 应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+
+	HANDLE mutex = CreateMutex(NULL, FALSE, _T("FCD03715-198E-4F3C-80FF-FEAEB0F3FF8F"));
+	if (mutex == NULL)
+	{
+		return FALSE;
+	}
+
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		/* You only need the message box if you wish to notify the user
+		   that the process is running*/
+		AfxMessageBox(_T("Another instance is already running."));
+		//::SetActiveWindow(AfxGetMainWnd()->m_hWnd);
+		/*AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		AfxGetMainWnd()->UpdateWindow();
+		AfxGetMainWnd()->SetWindowPos(&CWnd::wndTopMost, 0, 0, 0, 0,
+			SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);*/
+
+		CloseHandle(mutex);
+		mutex = NULL;
+		return FALSE;
+	}
 
 	CMBSNManagerDlg dlg;
 	m_pMainWnd = &dlg;
@@ -95,6 +135,9 @@ BOOL CMBSNManagerApp::InitInstance()
 	{
 		delete pShellManager;
 	}
+
+	
+
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 	ControlBarCleanUp();
