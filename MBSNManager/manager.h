@@ -6,7 +6,7 @@ using std::vector;
 
 typedef struct tagSNDATA {
 	int sid;
-	CString order, ordate, model, sn, client, sale;
+	CString order, ordate, model, sn, client, sale, status;
 }SNDATA, *LPSNDATA;
 
 extern CStringArray mbTypsArr;

@@ -69,4 +69,7 @@ public:
 	CEdit newSnEdit;
 	//CComboBox typeCombo;
 	CAutoCombox typeCombo;
+	CComboBox statusCombo;
+	CComboBox mfStatusCombo;
+	CComboBox mfSaleCombo;
 };

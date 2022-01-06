@@ -39,7 +39,7 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			m_pConnection->BeginTrans();
 			_variant_t RecordsAffected;
 			_bstr_t bstr1 = "CREATE TABLE SNTable";
-			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text NOT NULL Unique, Client Text, Sale Text)";
+			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text NOT NULL Unique, Client Text, Sale Text, Status Text)";
 			_bstr_t CommandText = bstr1 + bstr2;
 			//m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
 
@@ -149,6 +149,7 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 		data.sn = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("SerialNo"));
 		data.client = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Client"));
 		data.sale = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Sale"));
+		data.status = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Status"));
 		dbVector.push_back(data);
 
 		m_pRecordset->MoveNext();
