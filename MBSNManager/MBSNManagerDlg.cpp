@@ -535,8 +535,8 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 		AfxMessageBox(_T("数据不能为空"));
 		return;
 	}
-	snPre = sn.Mid(0, 3);
-	snSuf = sn.Mid(3, sn.Trim().GetLength());
+	snPre = sn.Mid(0, 5);
+	snSuf = sn.Mid(5, sn.Trim().GetLength());
 	BOOL flag = IsNum(snSuf);
 	if (!flag)
 	{
@@ -601,8 +601,9 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	mfSNEdit.GetWindowText(sn);
 	GetDlgItemText(IDC_MF_NEWSN, newSn);
 	GetDlgItemText(IDC_MF_EDIT, input);
-	snPre = newSn.Mid(0, 3);
-	snSuf = newSn.Mid(3, newSn.Trim().GetLength());
+
+	snPre = newSn.Mid(0, 5);
+	snSuf = newSn.Mid(5, newSn.Trim().GetLength());
 	BOOL flag = IsNum(snSuf);
 	if (!flag)
 	{
@@ -740,12 +741,12 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 
 			CString oldSN;
 			int length = snSuf.GetLength();
-			int snval = atoi((CT2A)snSuf);
-			int mfNo;
+			LONGLONG snval = atoll((CT2A)snSuf);
+			LONGLONG mfNo;
 			for (int i = 0; i < num; i++)
 			{
 				mfNo = snval + i;
-				temp.Format(_T("%0*d"), length, mfNo);
+				temp.Format(_T("%0*lld"), length, mfNo);
 				finalSN = snPre + temp;
 				oldSN = snVec[start + i];
 
@@ -806,6 +807,10 @@ void CMBSNManagerDlg::RefListView()
 		mList.SetItemText(nItem, 7, data.status);
 
 		nItem++;
+	}
+	if (nItem > 0)
+	{
+		mList.EnsureVisible(nItem - 1, FALSE);
 	}
 }
 

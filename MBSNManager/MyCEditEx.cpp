@@ -23,6 +23,8 @@ BOOL MyCEditEx::PreTranslateMessage(MSG * pMsg)
 			return CEdit::PreTranslateMessage(pMsg);
 		if ((ch >= '0' && ch <= '9'))
 			return CEdit::PreTranslateMessage(pMsg);
+		if ((ch == '-'))
+			return CEdit::PreTranslateMessage(pMsg);
 		
 		return TRUE;
 	}
