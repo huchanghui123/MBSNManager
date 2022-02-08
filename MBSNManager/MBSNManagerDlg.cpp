@@ -662,12 +662,12 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			
 			CString oldSN;
 			int length = snSuf.GetLength();
-			int snval = atoi((CT2A)snSuf);
-			int mfNo;
+			LONGLONG snval = atoll((CT2A)snSuf);
+			LONGLONG mfNo;
 			for (int i = 0; i < num; i++)
 			{
 				mfNo = snval + i;
-				temp.Format(_T("%0*d"), length, mfNo);
+				temp.Format(_T("%0*lld"), length, mfNo);
 				finalSN = snPre + temp;
 				oldSN = snVec[start+i];
 
