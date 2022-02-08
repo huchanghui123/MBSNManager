@@ -495,6 +495,7 @@ BOOL IsNum(CString str)
 	return TRUE;
 }
 
+//新增数据
 void CMBSNManagerDlg::OnBnClickedAddBtn()
 {
 	UpdateData(TRUE);
@@ -544,12 +545,12 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	}
 
 	int length = snSuf.GetLength();
-	int snval = atoi((CT2A)snSuf);//将整数字符串转换未整数
-	int addNo;
+	LONGLONG snval = atoll((CT2A)snSuf);//将整数字符串转换未整数
+	LONGLONG addNo;
 	for (int i = 0; i < num; i++)
 	{
 		addNo = snval + i;
-		temp.Format(_T("%0*d"), length, addNo);
+		temp.Format(_T("%0*lld"), length, addNo);
 		finalSN = snPre + temp;
 
 		TCHAR szSql[1024] = { 0 };
