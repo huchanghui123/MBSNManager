@@ -44,7 +44,7 @@ protected:
 	BOOL OnInitDataFile();
 	void OnInitDataBase();
 	void OnConDBAndUpdateList();
-	void RefListView();
+	void RefListView(int);
 	afx_msg  LRESULT  OnCreateAccessChange(WPARAM wParam, LPARAM lParam);
 
 public:

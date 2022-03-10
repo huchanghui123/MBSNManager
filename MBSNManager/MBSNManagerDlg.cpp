@@ -202,6 +202,7 @@ CString accessName;
 CString tableName;
 CString errorMsg;
 ADOTools ado;
+int NEWPOSITION = 0;
 
 CString status[2] = {
 	_T("入库"),_T("出库")
@@ -427,6 +428,12 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 
 			nItem++;
 		}
+
+		if (nItem > 0)
+		{
+			mList.EnsureVisible(nItem - 1, FALSE);
+		}
+
 	}
 }
 
@@ -535,42 +542,72 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 		AfxMessageBox(_T("数据不能为空"));
 		return;
 	}
-	snPre = sn.Mid(0, 5);
-	snSuf = sn.Mid(5, sn.Trim().GetLength());
-	BOOL flag = IsNum(snSuf);
-	if (!flag)
+
+	//只有批量添加数据才限制条码格式(有可能会有奇怪的格式)
+	if (num > 1)
 	{
-		AfxMessageBox(_T("条码格式错误!"));
-		return;
+		snPre = sn.Mid(0, 5);
+		snSuf = sn.Mid(5, sn.Trim().GetLength());
+		BOOL flag = IsNum(snSuf);
+		if (!flag)
+		{
+			AfxMessageBox(_T("条码格式错误!"));
+			return;
+		}
+
+		int length = snSuf.GetLength();
+		LONGLONG snval = atoll((CT2A)snSuf);//将整数字符串转换为整数
+		LONGLONG addNo;
+
+		for (int i = 0; i < num; i++)
+		{
+			addNo = snval + i;
+			temp.Format(_T("%0*lld"), length, addNo);
+			finalSN = snPre + temp;
+
+			TCHAR szSql[1024] = { 0 };
+			_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status)\
+							 VALUES('%s','%s','%s','%s','%s','%s','%s')"),
+				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+				(LPCTSTR)finalSN, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat);
+			//_tprintf(szSql);
+
+			BOOL ret = ado.OnExecuteADODB(szSql);
+			if (!ret)
+			{
+				AfxMessageBox(errorMsg);
+				//重新连接数据库，否则后续添加的数据会失败
+				ado.ExitADOConn();
+				ado.OnConnADODB();
+				return;
+			}
+		}
 	}
-
-	int length = snSuf.GetLength();
-	LONGLONG snval = atoll((CT2A)snSuf);//将整数字符串转换未整数
-	LONGLONG addNo;
-	for (int i = 0; i < num; i++)
+	else
 	{
-		addNo = snval + i;
-		temp.Format(_T("%0*lld"), length, addNo);
-		finalSN = snPre + temp;
-
 		TCHAR szSql[1024] = { 0 };
 		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status)\
 							 VALUES('%s','%s','%s','%s','%s','%s','%s')"),
-			(LPCTSTR)tableName,(LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)finalSN, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat);
+			(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+			(LPCTSTR)sn, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat);
 		//_tprintf(szSql);
 
 		BOOL ret = ado.OnExecuteADODB(szSql);
 		if (!ret)
 		{
 			AfxMessageBox(errorMsg);
+			ado.ExitADOConn();
+			ado.OnConnADODB();
 			return;
 		}
+		
 	}
+	
 
-	RefListView();
+	RefListView(0);
 }
 
+//修改数据
 void CMBSNManagerDlg::OnBnClickedMfBtn()
 {
 	UpdateData(TRUE);
@@ -602,22 +639,17 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	GetDlgItemText(IDC_MF_NEWSN, newSn);
 	GetDlgItemText(IDC_MF_EDIT, input);
 
-	snPre = newSn.Mid(0, 5);
-	snSuf = newSn.Mid(5, newSn.Trim().GetLength());
-	BOOL flag = IsNum(snSuf);
-	if (!flag)
-	{
-		AfxMessageBox(_T("新条码格式错误!"));
-		return;
-	}
+	
 	TCHAR szSql[1024] = { 0 };
 
 	//订单号批量修改数据
-	if (mfCBox.GetCurSel() == 0)
+	int mfCBoxIndex = mfCBox.GetCurSel();
+	if (mfCBoxIndex == 0)
 	{
 		int num = mfNum;
 		//如果条码为空，那么SQL语句用订单号作为条件(不修改条码)
-		if (num<=1 || sn.Trim().GetLength()==0)
+		//num:数量 sn:当前条码
+		if (num <= 1 || sn.Trim().GetLength() == 0)
 		{
 			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
 						Client='%s',Sale='%s',Status='%s' WHERE OrderNo='%s'"),
@@ -633,6 +665,15 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		}
 		else
 		{
+			snPre = newSn.Mid(0, 5);
+			snSuf = newSn.Mid(5, newSn.Trim().GetLength());
+			BOOL flag = IsNum(snSuf);
+			if (!flag)
+			{
+				AfxMessageBox(_T("新条码格式错误!"));
+				return;
+			}
+
 			//批量修改的数据如果包括条码，那么SQL语句的条件需使用条码号
 			//先查询出当前订单号的所有条码
 			TCHAR snSql[1024] = { 0 };
@@ -645,7 +686,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				return;
 			}
 			
-			int start = 0;
+			int start = 0; //起始条码位置
 			
 			for each (CString var in snVec)
 			{
@@ -655,8 +696,8 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				}
 				start++;
 			}
-			//修改的数量不能越界
-			if (start+num > snsize-start)
+			//修改的数量不能超出可修改的条码数
+			if (num > snsize-start)
 			{
 				num = snsize-start;
 			}
@@ -685,13 +726,13 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				}
 			}
 		}
-		RefListView();
+		RefListView(1);
 	}
 	else
 	{
 		int num = mfNum;
-		//条码修改单条数据
-		if (num<=1)
+		//修改单条数据(不限制条码格式)
+		if (num <= 1)
 		{
 			input.Trim();
 			if (newSn.Trim().GetLength() == 0)
@@ -710,8 +751,17 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				return;
 			}
 		}
-		else//批量修改条码
-		{
+		else
+		{	//批量修改条码
+			snPre = newSn.Mid(0, 5);
+			snSuf = newSn.Mid(5, newSn.Trim().GetLength());
+			BOOL flag = IsNum(snSuf);
+			if (!flag)
+			{
+				AfxMessageBox(_T("新条码格式错误!"));
+				return;
+			}
+
 			//先查询出当前订单号的所有条码
 			TCHAR snSql[1024] = { 0 };
 			_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)order);
@@ -734,7 +784,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				start++;
 			}
 			//修改的数量不能越界
-			if (start + num > snsize - start)
+			if (num > snsize - start)
 			{
 				num = snsize - start;
 			}
@@ -764,18 +814,18 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			}
 		}
 		
-		RefListView();
+		RefListView(1);
 	}
 }
 
 
 void CMBSNManagerDlg::OnRef()
 {
-	RefListView();
+	RefListView(0);
 }
 
-
-void CMBSNManagerDlg::RefListView()
+//0:滚动到最后一行 1:当前行
+void CMBSNManagerDlg::RefListView(int pos)
 {
 	CString lpSql;
 	lpSql.Format(_T("SELECT * FROM %s"), tableName);
@@ -810,7 +860,14 @@ void CMBSNManagerDlg::RefListView()
 	}
 	if (nItem > 0)
 	{
-		mList.EnsureVisible(nItem - 1, FALSE);
+		if (pos==0)
+		{
+			mList.EnsureVisible(nItem - 1, FALSE);
+		}
+		else
+		{
+			mList.EnsureVisible(NEWPOSITION, FALSE);
+		}
 	}
 }
 
@@ -826,6 +883,7 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 		while (pos)
 		{
 			int nItem = mList.GetNextSelectedItem(pos);
+			NEWPOSITION = nItem;
 			CString orderstr = mList.GetItemText(nItem, 1);
 			CString datestr = mList.GetItemText(nItem, 2);
 			CString modelstr = mList.GetItemText(nItem, 3);
@@ -877,7 +935,7 @@ void CMBSNManagerDlg::OnBnClickedDelBtn()
 	BOOL ret = ado.OnExecuteADODB(szSql);
 	if (ret)
 	{
-		RefListView();
+		RefListView(1);
 	}
 }
 
