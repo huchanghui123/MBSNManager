@@ -102,6 +102,7 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, OnItemchangedList1)
 	ON_BN_CLICKED(IDC_MF_BTN, &CMBSNManagerDlg::OnBnClickedMfBtn)
 	ON_CBN_SELCHANGE(IDC_MF_COMBO, &CMBSNManagerDlg::OnCbnSelchangeMfCombo)
+	ON_BN_CLICKED(IDC_BUTTON1, &CMBSNManagerDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -520,6 +521,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	//CString sn2;
 	CString temp;
 	CString finalSN;
+	CString typeSN;
 
 	GetDlgItemText(IDC_ADD_ORDER, order);
 	GetDlgItemText(IDC_ADD_DATE, date);
@@ -548,7 +550,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	{
 		snPre = sn.Mid(0, 5);
 		snSuf = sn.Mid(5, sn.Trim().GetLength());
-		BOOL flag = IsNum(snSuf);
+		BOOL flag = IsNum(snSuf);//前5位不限，后面的数据必须为数字
 		if (!flag)
 		{
 			AfxMessageBox(_T("条码格式错误!"));
@@ -564,12 +566,13 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 			addNo = snval + i;
 			temp.Format(_T("%0*lld"), length, addNo);
 			finalSN = snPre + temp;
+			typeSN = model + _T("_") + finalSN;
 
 			TCHAR szSql[1024] = { 0 };
-			_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status)\
-							 VALUES('%s','%s','%s','%s','%s','%s','%s')"),
+			_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status,TYPE_SN)\
+							 VALUES('%s','%s','%s','%s','%s','%s','%s','%s')"),
 				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-				(LPCTSTR)finalSN, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat);
+				(LPCTSTR)finalSN, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)typeSN);
 			//_tprintf(szSql);
 
 			BOOL ret = ado.OnExecuteADODB(szSql);
@@ -585,11 +588,12 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	}
 	else
 	{
+		typeSN = model + _T("_") + sn;
 		TCHAR szSql[1024] = { 0 };
-		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status)\
-							 VALUES('%s','%s','%s','%s','%s','%s','%s')"),
+		_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status,TYPE_SN)\
+							 VALUES('%s','%s','%s','%s','%s','%s','%s','%s')"),
 			(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-			(LPCTSTR)sn, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat);
+			(LPCTSTR)sn, (LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)typeSN);
 		//_tprintf(szSql);
 
 		BOOL ret = ado.OnExecuteADODB(szSql);
@@ -626,6 +630,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 	CString temp;
 	CString finalSN;
 	CString input;
+	CString typeSN;
 
 	GetDlgItemText(IDC_MF_ORDER, order);
 	GetDlgItemText(IDC_MF_DATE, date);
@@ -651,20 +656,64 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		//num:数量 sn:当前条码
 		if (num <= 1 || sn.Trim().GetLength() == 0)
 		{
-			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Client='%s',Sale='%s',Status='%s' WHERE OrderNo='%s'"),
-				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)input);
-
-			BOOL ret = ado.OnExecuteADODB(szSql);
-			if (!ret)
+			if (model.Trim().GetLength()==0)
 			{
-				AfxMessageBox(errorMsg);
+				AfxMessageBox(_T("型号不能为空"));
 				return;
+			}
+			//判断是否需要更新唯一字段TYPE_SN
+			//先查询出订单号的主板型号
+			TCHAR mySql[1024] = { 0 };
+			_stprintf(mySql, _T("SELECT * FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
+			vector<SNDATA> vecdata = ado.GetADODBForSql(mySql);
+			if (vecdata.size() <= 0)
+			{
+				AfxMessageBox(_T("没有找到数据，无法修改!"));
+				return;
+			}
+			else
+			{
+				SNDATA data = vecdata[0];
+				//如果型号相同，那么不需要修改型号，序列号，TYPE_SN三个字段
+				if (lstrcmp(data.model, model) == 0)
+				{
+					_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Client='%s',Sale='%s',Status='%s' WHERE OrderNo='%s'"),
+						(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+						(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)input);
+
+					BOOL ret = ado.OnExecuteADODB(szSql);
+					if (!ret)
+					{
+						AfxMessageBox(errorMsg);
+						return;
+					}
+				}
+				else
+				{
+					//型号有变动，需要更新唯一字段TYPE_SN
+					for each (SNDATA data in vecdata)
+					{
+						//更新唯一字段
+						typeSN = data.model + _T("_") + data.sn;
+
+						_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
+						Client='%s',Sale='%s',Status='%s',TYPE_SN='%s' WHERE OrderNo='%s'"),
+							(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
+							(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)typeSN, (LPCTSTR)input);
+
+						BOOL ret = ado.OnExecuteADODB(szSql);
+						if (!ret)
+						{
+							AfxMessageBox(errorMsg);
+							return;
+						}
+					}
+				}
 			}
 		}
 		else
-		{
+		{//条码有变化
 			snPre = newSn.Mid(0, 5);
 			snSuf = newSn.Mid(5, newSn.Trim().GetLength());
 			BOOL flag = IsNum(snSuf);
@@ -674,10 +723,10 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				return;
 			}
 
-			//批量修改的数据如果包括条码，那么SQL语句的条件需使用条码号
-			//先查询出当前订单号的所有条码
+			//批量修改的数据如果包括条码，那么SQL语句的条件需使用型号+条码号
+			//先查询出当前订单号的TYPE_SN
 			TCHAR snSql[1024] = { 0 };
-			_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
+			_stprintf(snSql, _T("SELECT TYPE_SN FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)input);
 			vector<CString> snVec = ado.GetADODBSNForSql(snSql);
 			int snsize = snVec.size();
 			if (snsize <= 0)
@@ -686,11 +735,12 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				return;
 			}
 			
-			int start = 0; //起始条码位置
-			
+			int start = 0; //计算起始条码位置
+			CString cpmSN;
 			for each (CString var in snVec)
 			{
-				if (lstrcmp(sn, var)==0)
+				cpmSN = model + _T("_") + sn;
+				if (lstrcmp(cpmSN, var)==0)
 				{
 					break;
 				}
@@ -703,6 +753,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			}
 			
 			CString oldSN;
+			CString oldTypeSN;
 			int length = snSuf.GetLength();
 			LONGLONG snval = atoll((CT2A)snSuf);
 			LONGLONG mfNo;
@@ -710,13 +761,16 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			{
 				mfNo = snval + i;
 				temp.Format(_T("%0*lld"), length, mfNo);
-				finalSN = snPre + temp;
+				finalSN = snPre + temp;//格式化后最终的条码
+				typeSN = model + _T("_") + finalSN;//更新唯一字段TYPE_SN
 				oldSN = snVec[start+i];
+				oldTypeSN = model + _T("_") + oldSN;//where条件，当前唯一字段
 
 				_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Client='%s',Sale='%s',Status='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s',Status='%s',SerialNo='%s',TYPE_SN='%s' WHERE TYPE_SN='%s'"),
 							(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-							(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)finalSN, (LPCTSTR)oldSN);
+							(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)finalSN,
+							(LPCTSTR)typeSN, (LPCTSTR)oldTypeSN);
 
 				BOOL ret = ado.OnExecuteADODB(szSql);
 				if (!ret)
@@ -728,22 +782,24 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 		}
 		RefListView(1);
 	}
-	else
+	else//通过序列号修改数据
 	{
 		int num = mfNum;
 		//修改单条数据(不限制条码格式)
 		if (num <= 1)
 		{
 			input.Trim();
+			CString oldTypeSN = model + _T("_") + input;
 			if (newSn.Trim().GetLength() == 0)
 			{
 				newSn = input;
 				SetDlgItemText(IDC_MF_NEWSN, newSn);
 			}
+			typeSN = model + _T("_") + newSn;//更新唯一TYPE_SN
 			_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Client='%s',Sale='%s',Status='%s', SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s',Status='%s', SerialNo='%s', TYPE_SN='%s' WHERE TYPE_SN='%s'"),
 				(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)newSn, (LPCTSTR)input);
+				(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)newSn, (LPCTSTR)typeSN, (LPCTSTR)oldTypeSN);
 			BOOL ret = ado.OnExecuteADODB(szSql);
 			if (!ret)
 			{
@@ -764,7 +820,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 
 			//先查询出当前订单号的所有条码
 			TCHAR snSql[1024] = { 0 };
-			_stprintf(snSql, _T("SELECT SerialNo FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)order);
+			_stprintf(snSql, _T("SELECT TYPE_SN FROM %s WHERE OrderNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)order);
 			vector<CString> snVec = ado.GetADODBSNForSql(snSql);
 			int snsize = snVec.size();
 			if (snsize <= 0)
@@ -774,15 +830,17 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			}
 
 			int start = 0;
-
+			CString cpmSN;
 			for each (CString var in snVec)
 			{
-				if (lstrcmp(sn, var) == 0)
+				cpmSN = model + _T("_") + sn;
+				if (lstrcmp(cpmSN, var) == 0)
 				{
 					break;
 				}
 				start++;
 			}
+			
 			//修改的数量不能越界
 			if (num > snsize - start)
 			{
@@ -790,6 +848,7 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 			}
 
 			CString oldSN;
+			CString oldTypeSN;
 			int length = snSuf.GetLength();
 			LONGLONG snval = atoll((CT2A)snSuf);
 			LONGLONG mfNo;
@@ -799,11 +858,13 @@ void CMBSNManagerDlg::OnBnClickedMfBtn()
 				temp.Format(_T("%0*lld"), length, mfNo);
 				finalSN = snPre + temp;
 				oldSN = snVec[start + i];
+				typeSN = model + _T("_") + finalSN;//更新唯一字段TYPE_SN
+				oldTypeSN = model + _T("_") + oldSN;//where条件，当前唯一字段
 
 				_stprintf(szSql, _T("UPDATE %s SET OrderNo='%s',OrderDate='%s',Model='%s',\
-						Client='%s',Sale='%s',Status='%s',SerialNo='%s' WHERE SerialNo='%s'"),
+						Client='%s',Sale='%s',Status='%s',SerialNo='%s',TYPE_SN='%s' WHERE TYPE_SN='%s'"),
 					(LPCTSTR)tableName, (LPCTSTR)order, (LPCTSTR)date, (LPCTSTR)model,
-					(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)finalSN, (LPCTSTR)oldSN);
+					(LPCTSTR)client, (LPCTSTR)sale, (LPCTSTR)stat, (LPCTSTR)finalSN, (LPCTSTR)typeSN, (LPCTSTR)oldTypeSN);
 
 				BOOL ret = ado.OnExecuteADODB(szSql);
 				if (!ret)
@@ -970,3 +1031,66 @@ void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 	}
 }
 
+
+
+void CMBSNManagerDlg::OnBnClickedButton1()
+{
+	TCHAR filePath[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, filePath);
+	SetCurrentDirectory(filePath);
+
+	
+
+	//2.获取所有的数据
+	CString lpSql;
+	lpSql.Format(_T("SELECT * FROM %s"), tableName);
+	vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
+	
+	if (vecdata.size() > 0)
+	{
+		//3.打开新数据库
+		CloseAccessData();
+
+		//1.创建一张新的表，名字为newnewnew
+		CString dbName = accessPath + _T("\\newnewnew.accdb");
+		accessFile = dbName;
+
+		BOOL ret = ado.CreateADOData(dbName);
+		if (!ret)
+		{
+			AfxMessageBox(_T("数据库创建失败!"));
+			return;
+		}
+
+
+		OnConDBAndUpdateList();
+
+		//4.添加数据
+		TCHAR szSql[1024] = { 0 };
+		CString typeSN;
+		for each (SNDATA data in vecdata)
+		{
+			typeSN.Format(_T("%s_%s"), (LPCTSTR)data.model, (LPCTSTR)data.sn);
+
+			_stprintf(szSql, _T("INSERT INTO %s(OrderNo,OrderDate,Model,SerialNo,Client,Sale,Status,TYPE_SN)\
+							 VALUES('%s','%s','%s','%s','%s','%s','%s','%s')"),
+				(LPCTSTR)tableName, (LPCTSTR)data.order, (LPCTSTR)data.ordate, (LPCTSTR)data.model,
+				(LPCTSTR)data.sn, (LPCTSTR)data.client, (LPCTSTR)data.sale, (LPCTSTR)data.status, (LPCTSTR)typeSN);
+
+			BOOL ret = ado.OnExecuteADODB(szSql);
+			if (!ret)
+			{
+				AfxMessageBox(errorMsg);
+				//重新连接数据库，否则后续添加的数据会失败
+				ado.ExitADOConn();
+				ado.OnConnADODB();
+				return;
+			}
+
+		}
+		RefListView(1);
+	}
+
+	
+
+}

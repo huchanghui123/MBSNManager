@@ -36,10 +36,11 @@ BOOL ADOTools::CreateADOData(CString fileName)
 			m_pConnection->Open(ConnectString, "", "", adModeUnknown);
 			
 			//创建数据表
+			//ID主键，OrderNo订单号，OrderDate时间，Model型号，SerialNo序列号，Client客户，Sale业务，Status状态，TYPE_SN型号_序列号(不为空的唯一字段，因为有不同型号主板序列号重复)
 			m_pConnection->BeginTrans();
 			_variant_t RecordsAffected;
 			_bstr_t bstr1 = "CREATE TABLE SNTable";
-			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text NOT NULL Unique, Client Text, Sale Text, Status Text)";
+			_bstr_t bstr2 = "(ID AUTOINCREMENT PRIMARY KEY, OrderNo Text, OrderDate Text, Model Text, SerialNo Text, Client Text, Sale Text, Status Text, TYPE_SN Text NOT NULL Unique)";
 			_bstr_t CommandText = bstr1 + bstr2;
 			//m_pConnection->Execute(CommandText, &RecordsAffected, adCmdText);
 

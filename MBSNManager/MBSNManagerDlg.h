@@ -72,4 +72,5 @@ public:
 	CComboBox statusCombo;
 	CComboBox mfStatusCombo;
 	CComboBox mfSaleCombo;
+	afx_msg void OnBnClickedButton1();
 };

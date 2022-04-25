@@ -1,5 +1,7 @@
 #pragma once
 #include <afxwin.h>
+//Ä£ºıÆ¥ÅäÖ÷°åĞÍºÅ
+
 class CAutoCombox :
 	public CComboBox
 {
