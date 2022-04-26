@@ -67,10 +67,11 @@ public:
 	MyCEditEx addSNEdit;
 	CEdit mfSNEdit;
 	CEdit newSnEdit;
-	//CComboBox typeCombo;
 	CAutoCombox typeCombo;
 	CComboBox statusCombo;
 	CComboBox mfStatusCombo;
 	CComboBox mfSaleCombo;
 	afx_msg void OnBnClickedButton1();
+	CAutoCombox findTypeCombo;
+	CAutoCombox delTypeCombo;
 };

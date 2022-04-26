@@ -17,6 +17,7 @@ public:
 	BOOL OnConnADODB();
 	vector<SNDATA> GetADODBForSql(LPCTSTR);
 	vector<CString> GetADODBSNForSql(LPCTSTR);
+	vector<CString> GetMyADODBForSql(LPCTSTR, LPCTSTR);
 	BOOL OnExecuteADODB(LPCTSTR);
 
 	void GetDBTableNames();

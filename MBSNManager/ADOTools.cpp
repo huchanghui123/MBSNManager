@@ -151,6 +151,7 @@ vector<SNDATA> ADOTools::GetADODBForSql(LPCTSTR lpSql)
 		data.client = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Client"));
 		data.sale = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Sale"));
 		data.status = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("Status"));
+		data.typeSN = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("TYPE_SN"));
 		dbVector.push_back(data);
 
 		m_pRecordset->MoveNext();
@@ -177,6 +178,29 @@ vector<CString> ADOTools::GetADODBSNForSql(LPCTSTR lpSql)
 	{
 		CString snStr = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect(_T("SerialNo"));
 		snVector.push_back(snStr);
+
+		m_pRecordset->MoveNext();
+	}
+	if (m_pRecordset->State == adStateOpen)
+	{
+		m_pRecordset->Close();
+	}
+	return snVector;
+}
+
+vector<CString> ADOTools::GetMyADODBForSql(LPCTSTR lpSql, LPCTSTR field)
+{
+	vector<CString> snVector = {};
+	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+		adOpenDynamic, adLockOptimistic, adCmdText);
+	if (m_pRecordset == NULL)
+	{
+		return snVector;
+	}
+	while (!m_pRecordset->adoEOF)
+	{
+		CString str = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect((_variant_t)field);
+		snVector.push_back(str);
 
 		m_pRecordset->MoveNext();
 	}
