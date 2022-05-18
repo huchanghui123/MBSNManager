@@ -22,6 +22,9 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+private:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+
 // 实现
 protected:
 	HICON m_hIcon;
@@ -72,6 +75,7 @@ public:
 	CComboBox mfStatusCombo;
 	CComboBox mfSaleCombo;
 	afx_msg void OnBnClickedButton1();
-	CAutoCombox findTypeCombo;
 	CAutoCombox delTypeCombo;
+	CDateTimeCtrl myDateTime;
+	afx_msg void OnDtnDatetimechangeDatetimepicker1(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -82,8 +82,17 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STAT_COMBO, statusCombo);
 	DDX_Control(pDX, IDC_MF_STAT, mfStatusCombo);
 	DDX_Control(pDX, IDC_MF_SALE, mfSaleCombo);
-	DDX_Control(pDX, IDC_FIND_TYPE_COMBO, findTypeCombo);
 	DDX_Control(pDX, IDC_DEL_COMBO, delTypeCombo);
+	DDX_Control(pDX, IDC_DATETIMEPICKER1, myDateTime);
+}
+
+BOOL CMBSNManagerDlg::PreTranslateMessage(MSG * pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE) return TRUE;  //去掉esc退出功能	
+	if(pMsg->message==WM_KEYDOWN && pMsg->wParam==VK_RETURN) return TRUE; //去掉回车退出功能，当然在这里也会导致整个窗体的失去回车效果	
+	else  //其他正常
+		return CDialogEx::PreTranslateMessage(pMsg);
+	
 }
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
@@ -105,6 +114,7 @@ BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MF_BTN, &CMBSNManagerDlg::OnBnClickedMfBtn)
 	ON_CBN_SELCHANGE(IDC_MF_COMBO, &CMBSNManagerDlg::OnCbnSelchangeMfCombo)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMBSNManagerDlg::OnBnClickedButton1)
+	ON_NOTIFY(DTN_DATETIMECHANGE, IDC_DATETIMEPICKER1, &CMBSNManagerDlg::OnDtnDatetimechangeDatetimepicker1)
 END_MESSAGE_MAP()
 
 
@@ -204,6 +214,7 @@ CString accessPath;
 CString accessName;
 CString tableName;
 CString errorMsg;
+CString getTime;
 ADOTools ado;
 int NEWPOSITION = 0;
 
@@ -220,10 +231,15 @@ void CMBSNManagerDlg::OnInitView()
 	fileName.Format(_T("%s"), filePath);
 	accessPath = fileName;
 
-	CTime time;
-	time = CTime::GetCurrentTime();
-	CString dateStr = time.Format("%Y-%m-%d");
-	GetDlgItem(IDC_ADD_DATE)->SetWindowText(dateStr);
+	myDateTime.SetFormat(_T("yyyy'-'MM'-'dd"));
+	CTime tt;
+	DWORD d = myDateTime.GetTime(tt);
+	if (d == GDT_VALID)
+	{
+		getTime = tt.Format(_T("%Y-%m-%d"));
+	}
+
+	GetDlgItem(IDC_ADD_DATE)->SetWindowText(getTime);
 
 	OnLoadMBTypes();
 
@@ -271,7 +287,6 @@ void CMBSNManagerDlg::OnLoadMBTypes()
 		{
 			//arr2.Add(temp);
 			typeCombo.InsertString(i, temp);
-			findTypeCombo.InsertString(i, temp);
 			delTypeCombo.InsertString(i, temp);
 			i++;
 		}
@@ -376,6 +391,7 @@ void CMBSNManagerDlg::OnInitDataBase()
 	OnConDBAndUpdateList();
 }
 
+//初始化数据库，获取数据并填充到ListView，只获取当前月份
 void CMBSNManagerDlg::OnConDBAndUpdateList()
 {
 	BOOL cret = ado.OnConnADODB();
@@ -386,8 +402,12 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 		GetDlgItem(IDC_MF_BTN)->EnableWindow(TRUE);
 		GetDlgItem(IDC_DEL_BTN)->EnableWindow(TRUE);
 
+		CString szDate;
+		szDate = getTime.Left(7);
+
 		CString lpSql;
-		lpSql.Format(_T("SELECT * FROM %s"), tableName);
+		//lpSql.Format(_T("SELECT * FROM %s "), tableName);
+		lpSql.Format(_T("SELECT * FROM %s WHERE OrderDate like '%s-[0-9][0-9]' ORDER BY ID"), tableName, szDate);
 		vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
 
 		CString status;
@@ -412,6 +432,7 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 
 			nItem++;
 		}
+		
 
 		if (nItem > 0)
 		{
@@ -424,12 +445,10 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 void CMBSNManagerDlg::OnBnClickedFindBtn()
 {
 	CString findStr;
-	CString typeStr;
 	CString typeSN;
 	TCHAR szSql[1024] = { 0 };
 
 	GetDlgItemText(IDC_FIND, findStr);
-	findTypeCombo.GetWindowText(typeStr);
 
 	if (findStr.Trim().GetLength() == 0)
 	{
@@ -442,17 +461,7 @@ void CMBSNManagerDlg::OnBnClickedFindBtn()
 	}
 	else if (findCBox.GetCurSel() == 1)
 	{
-		//通过序列号查询
-		if (typeStr.Trim().GetLength() == 0)
-		{
-			_stprintf(szSql, _T("SELECT * FROM %s WHERE SerialNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)findStr);
-		}
-		//通过TYPE_SN查询
-		else
-		{
-			typeSN = typeStr + _T("_") + findStr;
-			_stprintf(szSql, _T("SELECT * FROM %s WHERE TYPE_SN ='%s'"), (LPCTSTR)tableName, (LPCTSTR)typeSN);
-		}
+		_stprintf(szSql, _T("SELECT * FROM %s WHERE SerialNo ='%s'"), (LPCTSTR)tableName, (LPCTSTR)findStr);
 	}
 	else
 	{
@@ -559,6 +568,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 		LONGLONG snval = atoll((CT2A)snSuf);//将整数字符串转换为整数
 		LONGLONG addNo;
 
+		int len = mList.GetItemCount();
 		for (int i = 0; i < num; i++)
 		{
 			addNo = snval + i;
@@ -582,6 +592,18 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 				ado.OnConnADODB();
 				return;
 			}
+			
+			//刷新ListView
+			CString id;
+			id.Format(_T("%d"), len + i + 1);
+			mList.InsertItem(len + i, id);
+			mList.SetItemText(len + i, 1, order);
+			mList.SetItemText(len + i, 2, date);
+			mList.SetItemText(len + i, 3, model);
+			mList.SetItemText(len + i, 4, finalSN);
+			mList.SetItemText(len + i, 5, client);
+			mList.SetItemText(len + i, 6, sale);
+			mList.SetItemText(len + i, 7, stat);
 		}
 	}
 	else
@@ -602,11 +624,19 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 			ado.OnConnADODB();
 			return;
 		}
-		
+		int len = mList.GetItemCount();
+		CString id;
+		id.Format(_T("%d"), len + 1);
+		mList.InsertItem(len, id);
+		mList.SetItemText(len, 1, order);
+		mList.SetItemText(len, 2, date);
+		mList.SetItemText(len, 3, model);
+		mList.SetItemText(len, 4, sn);
+		mList.SetItemText(len, 5, client);
+		mList.SetItemText(len, 6, sale);
+		mList.SetItemText(len, 7, stat);
 	}
-	
-
-	RefListView(0);
+	//RefListView(0);
 }
 
 //修改数据
@@ -884,11 +914,13 @@ void CMBSNManagerDlg::OnRef()
 	RefListView(0);
 }
 
-//0:滚动到最后一行 1:当前行
+//查询数据刷新ListView 0:滚动到最后一行 1:当前行
 void CMBSNManagerDlg::RefListView(int pos)
 {
 	CString lpSql;
-	lpSql.Format(_T("SELECT * FROM %s"), tableName);
+	CString szDate;
+	szDate = getTime.Left(7);
+	lpSql.Format(_T("SELECT * FROM %s WHERE OrderDate like '%s-[0-9][0-9]' ORDER BY ID"), tableName, szDate);
 	
 	vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
 	if (vecdata.size()==0)
@@ -931,6 +963,7 @@ void CMBSNManagerDlg::RefListView(int pos)
 	}
 }
 
+//监听ListView点击事件
 void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	POSITION pos = mList.GetFirstSelectedItemPosition();
@@ -974,7 +1007,6 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 			{
 				SetDlgItemText(IDC_FIND, statstr);
 			}
-			SetDlgItemText(IDC_FIND_TYPE_COMBO, modelstr);
 
 			if (mfCBox.GetCurSel() == 0)
 			{
@@ -994,11 +1026,11 @@ void CMBSNManagerDlg::OnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 				SetDlgItemText(IDC_DEL_EDIT, snstr);
 			}
 			SetDlgItemText(IDC_DEL_COMBO, modelstr);
-
 		}
 	}
 }
 
+//删除数据
 void CMBSNManagerDlg::OnBnClickedDelBtn()
 {
 	CString delStr;
@@ -1016,6 +1048,11 @@ void CMBSNManagerDlg::OnBnClickedDelBtn()
 	if (delCBox.GetCurSel() == 0)
 	{
 		_stprintf(szSql, _T("DELETE FROM %s WHERE OrderNo='%s'"), (LPCTSTR)tableName, (LPCTSTR)delStr);
+		BOOL ret = ado.OnExecuteADODB(szSql);
+		if (ret)
+		{
+			RefListView(1);
+		}
 	}
 	else
 	{
@@ -1029,13 +1066,27 @@ void CMBSNManagerDlg::OnBnClickedDelBtn()
 			typeSN = typeStr + _T("_") + delStr;
 			_stprintf(szSql, _T("DELETE FROM %s WHERE TYPE_SN='%s'"), (LPCTSTR)tableName, (LPCTSTR)typeSN);
 		}
-		
+		BOOL ret = ado.OnExecuteADODB(szSql);
+		if (ret)
+		{
+			//不查询数据库更新ListView，删除不要的数据
+			int len = mList.GetItemCount();
+			int index = 0;
+			CString str;
+			for (int i = 0; i<len;i++)
+			{
+				str = mList.GetItemText(i, 4);
+				if (!str.Compare(delStr))
+				{
+					index = i;
+					break;
+				}
+			}
+			mList.DeleteItem(index);
+		}
+
 	}
-	BOOL ret = ado.OnExecuteADODB(szSql);
-	if (ret)
-	{
-		RefListView(1);
-	}
+	
 }
 
 void CMBSNManagerDlg::CreateAccessData()
@@ -1069,8 +1120,7 @@ void CMBSNManagerDlg::OnCbnSelchangeMfCombo()
 	}
 }
 
-
-
+//克隆到新表
 void CMBSNManagerDlg::OnBnClickedButton1()
 {
 	TCHAR filePath[MAX_PATH];
@@ -1129,4 +1179,28 @@ void CMBSNManagerDlg::OnBnClickedButton1()
 
 	
 
+}
+
+void CMBSNManagerDlg::OnDtnDatetimechangeDatetimepicker1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMDATETIMECHANGE pDTChange = reinterpret_cast<LPNMDATETIMECHANGE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	if (pDTChange->dwFlags == GDT_NONE)
+	{
+		myDateTime.EnableWindow(FALSE);
+	}
+	else if(pDTChange->dwFlags == GDT_VALID)
+	{
+		if (myDateTime.IsWindowEnabled() == TRUE)
+		{
+			CTime tt;
+			DWORD d = myDateTime.GetTime(tt);
+			if (d == GDT_VALID)
+			{
+				getTime = tt.Format(_T("%Y-%m-%d"));
+				OnRef();
+			}
+		}
+	}
+	*pResult = 0;
 }
