@@ -188,6 +188,28 @@ vector<CString> ADOTools::GetADODBSNForSql(LPCTSTR lpSql)
 	return snVector;
 }
 
+CString ADOTools::GetADODBValueForSql(LPCTSTR lpSql, LPCTSTR field)
+{
+	CString result;
+	m_pRecordset->Open((_variant_t)lpSql, m_pConnection.GetInterfacePtr(),
+		adOpenDynamic, adLockOptimistic, adCmdText);
+	if (m_pRecordset == NULL)
+	{
+		return result;
+	}
+	while (!m_pRecordset->adoEOF)
+	{
+		result = (LPCTSTR)(_bstr_t)m_pRecordset->GetCollect((_variant_t)field);
+
+		m_pRecordset->MoveNext();
+	}
+	if (m_pRecordset->State == adStateOpen)
+	{
+		m_pRecordset->Close();
+	}
+	return result;
+}
+
 vector<CString> ADOTools::GetMyADODBForSql(LPCTSTR lpSql, LPCTSTR field)
 {
 	vector<CString> snVector = {};
