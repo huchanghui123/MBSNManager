@@ -89,11 +89,11 @@ void CMBSNManagerDlg::DoDataExchange(CDataExchange* pDX)
 BOOL CMBSNManagerDlg::PreTranslateMessage(MSG * pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE) return TRUE;  //去掉esc退出功能	
-	if(pMsg->message==WM_KEYDOWN && pMsg->wParam==VK_RETURN) return TRUE; //去掉回车退出功能，当然在这里也会导致整个窗体的失去回车效果	
+	if (pMsg->message==WM_KEYDOWN && pMsg->wParam==VK_RETURN) return TRUE; //去掉回车退出功能，当然在这里也会导致整个窗体的失去回车效果	
+	
 	else  //其他正常
 		return CDialogEx::PreTranslateMessage(pMsg);
-	
-}
+	}
 
 BEGIN_MESSAGE_MAP(CMBSNManagerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
@@ -408,6 +408,7 @@ void CMBSNManagerDlg::OnConDBAndUpdateList()
 		CString lpSql;
 		//lpSql.Format(_T("SELECT * FROM %s "), tableName);
 		lpSql.Format(_T("SELECT * FROM %s WHERE OrderDate like '%s-[0-9][0-9]' ORDER BY ID"), tableName, szDate);
+		//lpSql.Format(_T("SELECT * FROM %s ORDER BY ID"), tableName);
 		vector<SNDATA> vecdata = ado.GetADODBForSql((LPCTSTR)lpSql);
 
 		CString status;
@@ -641,7 +642,7 @@ void CMBSNManagerDlg::OnBnClickedAddBtn()
 	//RefListView(0);
 
 	CString total;
-	total.Format(_T("Total: %d	DB: %s	"), mList.GetItemCount(), accessFile);
+	total.Format(_T("Total: %d	DB: %s  "), mList.GetItemCount(), accessFile);
 	GetDlgItem(IDC_DATA_TOTAL)->SetWindowText(total);
 }
 

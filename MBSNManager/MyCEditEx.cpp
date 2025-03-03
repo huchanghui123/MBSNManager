@@ -5,12 +5,19 @@
 //只允许输入10进制字符串
 BOOL MyCEditEx::PreTranslateMessage(MSG * pMsg)
 {
-	CString temp;
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		BOOL Control = ::GetKeyState(VK_CONTROL) & 0x8000;	
+		if (Control && (pMsg->wParam == _T('v')|| pMsg->wParam == _T('V')))
+		{
+			this->Paste();
+			return	TRUE;
+		}
+	}
+
 	if (WM_CHAR == pMsg->message)
 	{
-		 GetWindowText(temp);
-		 //printf("%s", temp);
-		//相应back键
+		//响应back键
 		if (pMsg->wParam == VK_BACK)
 		{
 			return CEdit::PreTranslateMessage(pMsg);
